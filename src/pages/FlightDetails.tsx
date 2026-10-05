@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import StatusBadge from "../components/StatusBadge";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { useData } from "../data/DataContext";
 
 const dash = (v?: string | number) =>
@@ -19,7 +20,8 @@ const dash = (v?: string | number) =>
 export default function FlightDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { flightLogs, drones, batteries } = useData();
+  const { flightLogs, drones, batteries, deleteFlightLog } = useData();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const log = flightLogs.find((f) => f.id === id);
 
@@ -36,6 +38,13 @@ export default function FlightDetails() {
 
   const drone = drones.find((d) => d.name === log.drone);
   const battery = batteries.find((b) => b.serial === log.battery);
+
+const handleDelete = () => {
+  if (!log) return;
+  deleteFlightLog(log.id);
+  setConfirmDelete(false);
+  navigate("/flight-logs");
+};
 
   // Derived values that only exist if both ends are present
   const hasBatteryRange =
@@ -80,7 +89,10 @@ export default function FlightDetails() {
           </div>
 
           <div className="flex gap-3">
-            <button className="btn flex-1 border border-red-300 bg-white text-red-700 hover:bg-red-50 sm:flex-none">
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="btn flex-1 border border-red-300 bg-white text-red-700 hover:bg-red-50 sm:flex-none"
+            >
               <Trash2 className="h-4 w-4" />
               Delete
             </button>
@@ -245,9 +257,21 @@ export default function FlightDetails() {
           </section>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={`Delete ${log.id}?`}
+        description="This flight log will be removed permanently. This cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        tone="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </>
   );
 }
+
 
 function Metric({
   icon,
