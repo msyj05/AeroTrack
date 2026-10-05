@@ -1,31 +1,59 @@
-import type { ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BatteryCharging, Command, Gauge, Map as MapIcon, Paperclip, Pencil, Plane, Thermometer, Timer, Trash2 } from 'lucide-react'
-import StatusBadge from '../components/StatusBadge'
-import { batteries, drones, flightLogs } from '../data/mock'
+import { useState, type ReactNode } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  BatteryCharging,
+  Command,
+  Pencil,
+  Plane,
+  Thermometer,
+  Timer,
+  Trash2,
+} from "lucide-react";
+import StatusBadge from "../components/StatusBadge";
+import { useData } from "../data/DataContext";
+
+const dash = (v?: string | number) =>
+  v === undefined || v === "" ? "—" : String(v);
 
 export default function FlightDetails() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const log = flightLogs.find((f) => f.id === id)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { flightLogs, drones, batteries } = useData();
+
+  const log = flightLogs.find((f) => f.id === id);
 
   if (!log) {
     return (
       <div className="p-8">
         <p className="text-slate-600">Flight log {id} was not found.</p>
-        <Link to="/flight-logs" className="mt-3 inline-block text-brand">Back to flight logs</Link>
+        <Link to="/flight-logs" className="mt-3 inline-block text-brand">
+          Back to flight logs
+        </Link>
       </div>
-    )
+    );
   }
 
-  const drone = drones.find((d) => d.name === log.drone)
-  const battery = batteries.find((b) => b.serial === log.battery)
+  const drone = drones.find((d) => d.name === log.drone);
+  const battery = batteries.find((b) => b.serial === log.battery);
+
+  // Derived values that only exist if both ends are present
+  const hasBatteryRange =
+    log.initialPct !== undefined && log.finalPct !== undefined;
+  const batteryUsed = hasBatteryRange
+    ? (log.initialPct as number) - (log.finalPct as number)
+    : null;
+
+  const hasTempRange =
+    log.initialTemp !== undefined && log.finalTemp !== undefined;
+  const tempDelta = hasTempRange
+    ? (log.finalTemp as number) - (log.initialTemp as number)
+    : null;
 
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/95 px-4 py-4 backdrop-blur sm:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Title row */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/flight-logs")}
@@ -51,7 +79,6 @@ export default function FlightDetails() {
             </div>
           </div>
 
-          {/* Action row — stacks under title on mobile, inline on desktop */}
           <div className="flex gap-3">
             <button className="btn flex-1 border border-red-300 bg-white text-red-700 hover:bg-red-50 sm:flex-none">
               <Trash2 className="h-4 w-4" />
@@ -65,8 +92,9 @@ export default function FlightDetails() {
         </div>
       </header>
 
-      <div className="space-y-5 p-8">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="space-y-5 p-4 sm:p-8">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {" "}
           <Metric
             icon={<Timer className="h-4 w-4" />}
             label="Duration"
@@ -76,20 +104,26 @@ export default function FlightDetails() {
           <Metric
             icon={<BatteryCharging className="h-4 w-4" />}
             label="Battery used"
-            value="57%"
-            sub={`98% → 41% · ${log.battery}`}
+            value={batteryUsed !== null ? `${batteryUsed}%` : "—"}
+            sub={
+              hasBatteryRange
+                ? `${log.initialPct}% → ${log.finalPct}% · ${log.battery}`
+                : `Battery ${dash(log.battery)}`
+            }
           />
           <Metric
             icon={<Thermometer className="h-4 w-4" />}
             label="Temp delta"
-            value="+14°C"
-            sub="24°C → 38°C"
-          />
-          <Metric
-            icon={<Gauge className="h-4 w-4" />}
-            label="Max altitude"
-            value="118 m"
-            sub="Below 120 m limit"
+            value={
+              tempDelta !== null
+                ? `${tempDelta > 0 ? "+" : ""}${tempDelta}°C`
+                : "—"
+            }
+            sub={
+              hasTempRange
+                ? `${log.initialTemp}°C → ${log.finalTemp}°C`
+                : "No temperature log"
+            }
           />
         </div>
 
@@ -99,11 +133,11 @@ export default function FlightDetails() {
             title="Flight information"
           >
             <Row k="Flight date" v={log.date} />
-            <Row k="Reporting time" v="08:50" />
-            <Row k="Leaving time" v="09:55" />
+            <Row k="Reporting time" v={dash(log.reporting)} />
+            <Row k="Leaving time" v={dash(log.leaving)} />
             <Row k="Location" v={log.location} />
-            <Row k="Purpose" v="Facade inspection B4–B9" />
-            <Row k="Flight type" v="VLOS · Commercial" />
+            <Row k="Purpose" v={dash(log.purpose)} />
+            <Row k="Flight type" v={dash(log.flightType)} />
           </Panel>
 
           <Panel icon={<Command className="h-4 w-4" />} title="Drone & pilot">
@@ -114,78 +148,99 @@ export default function FlightDetails() {
               <div className="flex-1">
                 <p className="text-sm font-medium">{log.drone}</p>
                 <p className="font-mono text-xs text-slate-400">
-                  {drone?.serial}
+                  {drone?.serial ?? "—"}
                 </p>
               </div>
               {drone && <StatusBadge label={drone.status} />}
             </div>
-            <Row k="Pilot" v={`${log.pilot} · Lic. GVC-2291`} />
-            <Row k="Total pilot hours" v="86.5 h" />
+            <Row k="Pilot" v={log.pilot} />
             <Row
               k="Airframe hours"
-              v={`${drone?.airTimeHours} h · ${drone?.flights} flights`}
+              v={
+                drone
+                  ? `${drone.airTimeHours} h · ${drone.flights} flights`
+                  : "—"
+              }
             />
           </Panel>
 
           <Panel icon={<BatteryCharging className="h-4 w-4" />} title="Battery">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-medium">{log.battery}</span>
+              <span className="text-sm font-medium">{dash(log.battery)}</span>
               {battery && <StatusBadge label={battery.condition} />}
             </div>
             <div className="h-2 rounded-full bg-slate-100">
               <div
                 className="h-2 rounded-full bg-brand"
-                style={{ width: "41%" }}
+                style={{ width: `${log.finalPct ?? 0}%` }}
               />
             </div>
             <p className="mt-1.5 text-xs text-slate-500">
-              Landed at 41% · health {battery?.health}% · {battery?.cycles}{" "}
-              cycles
+              {log.finalPct !== undefined
+                ? `Landed at ${log.finalPct}%`
+                : "Landed percentage not recorded"}
+              {battery &&
+                ` · health ${battery.health}% · ${battery.cycles} cycles`}
             </p>
             <div className="mt-4">
-              <Row k="Model" v={battery?.model ?? ""} />
-              <Row k="Temp" v="24°C → 38°C" />
-              <Row k="Condition" v="No swelling, nominal" />
+              <Row k="Model" v={battery?.model ?? "—"} />
+              <Row
+                k="Temp"
+                v={
+                  hasTempRange
+                    ? `${log.initialTemp}°C → ${log.finalTemp}°C`
+                    : "—"
+                }
+              />
+              <Row k="Condition" v={battery?.condition ?? "—"} />
             </div>
           </Panel>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[2fr_1fr]">
-          <section className="card p-6">
+          <section className="card p-4 sm:p-6">
             <h3 className="font-display font-semibold">Notes</h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">
-              Light crosswind (8 kt NW) on final approach. Facade grid B4–B9
-              captured at 80% overlap. Imagery uploaded to job folder HB-091. No
-              airspace conflicts; marina traffic held clear by spotter.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
-                <Paperclip className="h-3.5 w-3.5" />
-                facade-B4-B9.zip · 412 MB
-              </span>
-              <span className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
-                <MapIcon className="h-3.5 w-3.5" />
-                track-log.kml
-              </span>
-            </div>
+            {log.notes ? (
+              <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                {log.notes}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm italic text-slate-400">
+                No notes were recorded for this flight.
+              </p>
+            )}
+            {log.incident && log.incident !== "No issues to report" && (
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                <Thermometer className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  <span className="font-medium">Incident reported:</span>{" "}
+                  {log.incident}
+                </span>
+              </div>
+            )}
           </section>
 
-          <section className="card p-6">
-            <h3 className="font-display font-semibold">Record history</h3>
-            <ul className="mt-4 space-y-4">
-              {[
-                ["Created", "Maya Chen · Sep 26, 09:58"],
-                ["Reviewed", "Ops Desk · Sep 26, 12:04"],
-                ["Synced", "Cloud vault · Sep 26, 12:05"],
-              ].map(([t, s]) => (
-                <li key={t} className="flex gap-3">
-                  <span className="mt-1.5 h-2 w-2 rounded-full bg-brand" />
+          <section className="card p-4 sm:p-6">
+            <h3 className="font-display font-semibold">Record</h3>
+            <ul className="mt-4 space-y-4 text-sm">
+              <li className="flex gap-3">
+                <span className="mt-1.5 h-2 w-2 rounded-full bg-brand" />
+                <div>
+                  <p className="font-medium">Created</p>
+                  <p className="text-xs text-slate-500">
+                    {log.pilot} · {log.date}
+                  </p>
+                </div>
+              </li>
+              {log.incident && log.incident !== "No issues to report" && (
+                <li className="flex gap-3">
+                  <span className="mt-1.5 h-2 w-2 rounded-full bg-amber-500" />
                   <div>
-                    <p className="text-sm font-medium">{t}</p>
-                    <p className="text-xs text-slate-500">{s}</p>
+                    <p className="font-medium">Flagged for review</p>
+                    <p className="text-xs text-slate-500">{log.incident}</p>
                   </div>
                 </li>
-              ))}
+              )}
             </ul>
           </section>
         </div>
@@ -194,23 +249,47 @@ export default function FlightDetails() {
   );
 }
 
-function Metric({ icon, label, value, sub }: { icon: ReactNode; label: string; value: string; sub: string }) {
+function Metric({
+  icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+}) {
   return (
-    <div className="card p-5">
-      <p className="flex items-center gap-2 text-xs text-slate-500">{icon}{label}</p>
+    <div className="card p-4 sm:p-5">
+      <p className="flex items-center gap-2 text-xs text-slate-500">
+        {icon}
+        {label}
+      </p>
       <p className="mt-2 font-display text-2xl font-semibold">{value}</p>
       <p className="mt-1 font-mono text-xs text-slate-500">{sub}</p>
     </div>
-  )
+  );
 }
 
-function Panel({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+function Panel({
+  icon,
+  title,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  children: ReactNode;
+}) {
   return (
-    <section className="card p-6">
-      <h3 className="mb-4 flex items-center gap-2 font-display font-semibold">{icon}{title}</h3>
+    <section className="card p-4 sm:p-6">
+      <h3 className="mb-4 flex items-center gap-2 font-display font-semibold">
+        {icon}
+        {title}
+      </h3>
       {children}
     </section>
-  )
+  );
 }
 
 function Row({ k, v }: { k: string; v: string }) {
@@ -219,5 +298,5 @@ function Row({ k, v }: { k: string; v: string }) {
       <span className="text-slate-500">{k}</span>
       <span className="text-right font-medium">{v}</span>
     </div>
-  )
+  );
 }

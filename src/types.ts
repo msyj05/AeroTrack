@@ -3,16 +3,28 @@ export type DroneStatus = 'Ready' | 'In Maintenance' | 'Grounded'
 export type BatteryCondition = 'Excellent' | 'Good' | 'Monitor' | 'Degraded'
 
 export interface FlightLog {
-  id: string
-  date: string
-  pilot: string
-  drone: string
-  location: string
-  start: string
-  end: string
-  durationMin: number
-  battery: string
-  status: FlightStatus
+  id: string;
+  date: string;
+  pilot: string;
+  drone: string;
+  location: string;
+  start: string;
+  end: string;
+  durationMin: number;
+  battery: string;
+  status: FlightStatus;
+  // new fields
+  reporting?: string;
+  leaving?: string;
+  purpose?: string;
+  flightType?: string;
+  initialPct?: number;
+  finalPct?: number;
+  initialTemp?: number;
+  finalTemp?: number;
+  maxAltitude?: number;
+  notes?: string;
+  incident?: string;
 }
 
 export interface Drone {

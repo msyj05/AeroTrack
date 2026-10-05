@@ -1,35 +1,144 @@
-import { useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, Check, CheckCircle2, ChevronDown, CircleDashed, Command, FileText, Plane, Thermometer, Timer, BatteryCharging } from 'lucide-react'
-import { currentUser, drones } from '../data/mock'
+import { useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  CircleDashed,
+  Command,
+  FileText,
+  Plane,
+  Thermometer,
+  Timer,
+  BatteryCharging,
+} from "lucide-react";
+import { currentUser } from "../data/mock";
+import { useData } from "../data/DataContext";
+import type { FlightLog } from "../types";
 
 const toMin = (t: string) => {
-  const [h, m] = t.split(':').map(Number)
-  return h * 60 + m
-}
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+};
 
 export default function AddFlightLog() {
-  const navigate = useNavigate()
-  const [f, setF] = useState({
-    date: '2026-09-26', location: 'Harbor Yard — Pier 4', reporting: '08:30', leaving: '09:55',
-    start: '09:12', end: '', purpose: 'Facade inspection — north elevation, grid B4–B9',
-    drone: drones[0].name, pilot: currentUser.name, type: '',
-    batterySerial: 'BAT-014', cycles: '86', initialPct: '98', finalPct: '41', initialTemp: '24', finalTemp: '38',
-    notes: '', incident: 'No issues to report',
-  })
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setF({ ...f, [k]: e.target.value })
+  const navigate = useNavigate();
+  const { drones, batteries, flightLogs, addFlightLog } = useData();
 
-  const endInvalid = f.end !== '' && toMin(f.end) <= toMin(f.start)
-  const duration = f.end && !endInvalid ? toMin(f.end) - toMin(f.start) : null
-  const tempDelta = Number(f.finalTemp) - Number(f.initialTemp)
+  const [f, setF] = useState({
+    date: "",
+    location: "",
+    reporting: "",
+    leaving: "",
+    start: "",
+    end: "",
+    purpose: "",
+    drone: drones[0]?.name ?? "",
+    pilot: currentUser.name,
+    type: "",
+    batterySerial: batteries[0]?.serial ?? "",
+    cycles: "",
+    initialPct: "",
+    finalPct: "",
+    initialTemp: "",
+    finalTemp: "",
+    notes: "",
+    incident: "No issues to report",
+  });
+
+  const set =
+    (k: keyof typeof f) =>
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >,
+    ) =>
+      setF({ ...f, [k]: e.target.value });
+
+  const endInvalid =
+    f.start !== "" && f.end !== "" && toMin(f.end) <= toMin(f.start);
+
+  const duration =
+    f.start !== "" && f.end !== "" && !endInvalid
+      ? toMin(f.end) - toMin(f.start)
+      : null;
+
+  const tempDelta =
+    f.initialTemp !== "" && f.finalTemp !== ""
+      ? Number(f.finalTemp) - Number(f.initialTemp)
+      : null;
+
+  const batteryUsed =
+    f.initialPct !== "" && f.finalPct !== ""
+      ? Number(f.initialPct) - Number(f.finalPct)
+      : null;
+
   const checks = [
-    { label: 'Airspace authorization verified', done: true },
-    { label: 'Battery temp within limits', done: tempDelta <= 20 },
-    { label: 'End time entered', done: !!f.end && !endInvalid },
-    { label: 'Imagery attached (4 files)', done: true },
-  ]
-  const complete = checks.filter((c) => c.done).length
+    { label: "Airspace authorization verified", done: true },
+    {
+      label: "Battery temp within limits",
+      done: tempDelta !== null && tempDelta <= 20,
+    },
+    { label: "End time entered", done: !!f.end && !endInvalid },
+    { label: "Imagery attached (4 files)", done: true },
+  ];
+  const complete = checks.filter((c) => c.done).length;
+
+  const save = () => {
+    if (!f.date || !f.location || !f.start || !f.end || endInvalid) return;
+
+    // Parse yyyy-mm-dd as local time, then format like the rest of the app
+    const [y, m, d] = f.date.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    const formatted = date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    // Next FL-XXXX from existing logs
+    const highest = flightLogs.reduce((max, l) => {
+      const n = Number(l.id.replace("FL-", ""));
+      return Number.isFinite(n) && n > max ? n : max;
+    }, 2474);
+    const nextId = `FL-${highest + 1}`;
+
+    // Status inferred from the incident field
+    const status: FlightLog["status"] =
+      f.incident === "No issues to report" ? "Completed" : "Review";
+
+    // Coerce numeric strings into numbers where sensible; undefined if empty
+    const num = (v: string) => (v === "" ? undefined : Number(v));
+
+    const newLog: FlightLog = {
+      id: nextId,
+      date: formatted,
+      pilot: f.pilot,
+      drone: f.drone,
+      location: f.location,
+      start: f.start,
+      end: f.end,
+      durationMin: duration ?? 0,
+      battery: f.batterySerial,
+      status,
+
+      reporting: f.reporting || undefined,
+      leaving: f.leaving || undefined,
+      purpose: f.purpose || undefined,
+      flightType: f.type || undefined,
+      initialPct: num(f.initialPct),
+      finalPct: num(f.finalPct),
+      initialTemp: num(f.initialTemp),
+      finalTemp: num(f.finalTemp),
+      notes: f.notes || undefined,
+      incident: f.incident || undefined,
+    };
+
+    addFlightLog(newLog);
+    navigate("/flight-logs");
+  };
 
   return (
     <>
@@ -49,12 +158,12 @@ export default function AddFlightLog() {
                 Add flight log
               </h1>
               <p className="truncate text-sm text-slate-500">
-                Draft autosaved 2 min ago · FL-2482
+                Fill in the details below
               </p>
             </div>
           </div>
 
-          {/* Actions row — stacks under title on mobile, inline on desktop */}
+          {/* Actions row */}
           <div className="flex gap-3">
             <button
               onClick={() => navigate("/flight-logs")}
@@ -63,8 +172,11 @@ export default function AddFlightLog() {
               Cancel
             </button>
             <button
-              onClick={() => navigate("/flight-logs")}
-              className="btn-primary flex-1 sm:flex-none"
+              onClick={save}
+              disabled={
+                !f.date || !f.location || !f.start || !f.end || endInvalid
+              }
+              className="btn-primary flex-1 sm:flex-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Check className="h-4 w-4" />
               Save Flight Log
@@ -92,6 +204,7 @@ export default function AddFlightLog() {
                 <input
                   value={f.location}
                   onChange={set("location")}
+                  placeholder="Burma Camp Training Grounds"
                   className="input"
                 />
               </Field>
@@ -138,6 +251,7 @@ export default function AddFlightLog() {
               <input
                 value={f.purpose}
                 onChange={set("purpose")}
+                placeholder="Private soldiers drone training"
                 className="input"
               />
             </Field>
@@ -189,26 +303,37 @@ export default function AddFlightLog() {
             icon={<BatteryCharging className="h-4 w-4 text-emerald-600" />}
             title="Battery information"
           >
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {" "}
               <Field label="Battery serial">
-                <input
-                  value={f.batterySerial}
-                  onChange={set("batterySerial")}
-                  className="input"
-                />
+                <div className="relative">
+                  <select
+                    value={f.batterySerial}
+                    onChange={set("batterySerial")}
+                    className="input appearance-none"
+                  >
+                    {batteries.map((b) => (
+                      <option key={b.serial} value={b.serial}>
+                        {b.serial} — {b.model}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-500" />
+                </div>
               </Field>
               <Field label="Cycle count">
                 <input
                   value={f.cycles}
                   readOnly
-                  className="input bg-slate-50 text-slate-500"
+                  placeholder="Auto from battery"
+                  className="input bg-slate-50 text-slate-500 placeholder:text-slate-400"
                 />
               </Field>
-              <div className="hidden sm:block" />
               <Field label="Initial battery %">
                 <input
                   value={f.initialPct}
                   onChange={set("initialPct")}
+                  placeholder="e.g. 98"
                   className="input"
                 />
               </Field>
@@ -216,30 +341,34 @@ export default function AddFlightLog() {
                 <input
                   value={f.finalPct}
                   onChange={set("finalPct")}
+                  placeholder="e.g. 41"
                   className="input"
                 />
               </Field>
-              <div className="hidden sm:block" />
-              <Field label="Initial temp">
+              <Field label="Initial temp (°C)">
                 <input
                   value={f.initialTemp}
                   onChange={set("initialTemp")}
+                  placeholder="e.g. 24"
                   className="input"
                 />
               </Field>
-              <Field label="Final temp">
+              <Field label="Final temp (°C)">
                 <input
                   value={f.finalTemp}
                   onChange={set("finalTemp")}
+                  placeholder="e.g. 38"
                   className="input"
                 />
               </Field>
-              <div className="flex items-center gap-2 self-end rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                <Thermometer className="h-4 w-4 shrink-0" />Δ {tempDelta}°C{" "}
-                {tempDelta <= 20
-                  ? "· within limit, watch on next cycle."
-                  : "· above limit, review battery."}
-              </div>
+              {tempDelta !== null && (
+                <div className="flex items-center gap-2 self-end rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  <Thermometer className="h-4 w-4 shrink-0" />Δ {tempDelta}°C{" "}
+                  {tempDelta <= 20
+                    ? "· within limit, watch on next cycle."
+                    : "· above limit, review battery."}
+                </div>
+              )}
             </div>
           </Section>
 
@@ -310,13 +439,12 @@ export default function AddFlightLog() {
             </p>
             {duration === null && (
               <p className="mt-2 text-xs text-slate-400">
-                Enter end time to calculate duration, energy used and compliance
-                flags.
+                Enter start and end times to calculate duration.
               </p>
             )}
-            {duration !== null && (
+            {duration !== null && batteryUsed !== null && (
               <p className="mt-2 text-xs text-slate-400">
-                Battery used: {Number(f.initialPct) - Number(f.finalPct)}%
+                Battery used: {batteryUsed}%
               </p>
             )}
           </div>
@@ -331,23 +459,41 @@ export default function AddFlightLog() {
   );
 }
 
-function Section({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+function Section({
+  icon,
+  title,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  children: ReactNode;
+}) {
   return (
-    <section className="card p-6">
+    <section className="card p-4 sm:p-6">
       <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">{icon}</span>
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
+          {icon}
+        </span>
         <h2 className="font-display text-base font-semibold">{title}</h2>
       </div>
       {children}
     </section>
-  )
+  );
 }
 
-function Field({ label, children, className = '' }: { label: string; children: ReactNode; className?: string }) {
+function Field({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={className}>
       <label className="mb-1.5 block text-sm text-slate-600">{label}</label>
       {children}
     </div>
-  )
+  );
 }

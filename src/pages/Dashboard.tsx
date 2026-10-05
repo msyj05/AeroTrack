@@ -4,19 +4,21 @@ import { AlertTriangle, ArrowRight, BatteryCharging, Clock, Command, Plane } fro
 import Topbar from '../components/Topbar'
 import StatCard from '../components/StatCard'
 import StatusBadge from '../components/StatusBadge'
-import { activityByDay, batteries, drones, flightLogs } from '../data/mock'
+import { activityByDay } from '../data/mock'
+import { useData } from '../data/DataContext'
 
 export default function Dashboard() {
   const [metric, setMetric] = useState<'flights' | 'hours'>('flights')
   const values = activityByDay.map((d) => d[metric])
   const max = Math.max(...values)
 
+  const { flightLogs, drones, batteries } = useData()
   const readyDrones = drones.filter((d) => d.status === 'Ready').length
   const healthyPacks = batteries.filter((b) => b.condition === 'Good' || b.condition === 'Excellent').length
 
   return (
     <>
-      <Topbar title="Dashboard"/>
+      <Topbar title="Dashboard" />
 
       <div className="space-y-6 p-8">
         <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -24,14 +26,14 @@ export default function Dashboard() {
           <StatCard
             icon={Plane}
             tone="blue"
-            value="248"
+            value={String(flightLogs.length)}
             label="Total Flights"
             chip="+12"
           />
           <StatCard
             icon={Clock}
             tone="green"
-            value="213.4h"
+            value={`${drones.reduce((sum, d) => sum + d.airTimeHours, 0).toFixed(1)}h`}
             label="Total Flight Hours"
             chip="+8.2h"
           />
@@ -40,14 +42,14 @@ export default function Dashboard() {
             tone="amber"
             value={String(drones.length)}
             label="Total Drones"
-            chip="1 in maint."
+            chip={`${drones.filter((d) => d.status === "In Maintenance").length} in maint.`}
           />
           <StatCard
             icon={BatteryCharging}
             tone="blue"
-            value="12"
+            value={String(batteries.length)}
             label="Total Batteries"
-            chip="2 monitor"
+            chip={`${batteries.filter((b) => b.condition === "Monitor" || b.condition === "Degraded").length} monitor`}
           />
         </section>
 

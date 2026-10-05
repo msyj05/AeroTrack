@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Topbar from "../components/Topbar";
 import StatusBadge from "../components/StatusBadge";
-import { drones, flightLogs } from "../data/mock";
+import { useData } from "../data/DataContext";
 import type { FlightStatus } from "../types";
 
 type Filter = "All" | "Incident" | "Review";
@@ -23,6 +23,7 @@ export default function FlightLogs() {
   const [pilot, setPilot] = useState("All pilots");
   const [drone, setDrone] = useState("All drones");
   const [status, setStatus] = useState<Filter>("All");
+  const { flightLogs, drones } = useData();
 
   const pilots = useMemo(
     () => Array.from(new Set(flightLogs.map((f) => f.pilot))),
@@ -95,7 +96,11 @@ export default function FlightLogs() {
                 options={["All drones", ...drones.map((d) => d.name)]}
               />
 
-              <Link to="/flight-logs/new" className="btn-primary sm:ml-auto" aria-label="Add flight log">
+              <Link
+                to="/flight-logs/new"
+                className="btn-primary sm:ml-auto"
+                aria-label="Add flight log"
+              >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add Flight Log</span>
                 <span className="sm:hidden">Log</span>
@@ -109,7 +114,7 @@ export default function FlightLogs() {
             {chip("Incident", "Incident only")}
             {chip("Review", "Needs review")}
             <span className="ml-auto shrink-0 text-xs text-slate-500">
-              {rows.length} of 248
+              {rows.length} of {flightLogs.length}
             </span>
           </div>
 
@@ -219,7 +224,7 @@ export default function FlightLogs() {
           {/* Pagination */}
           <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <span className="text-xs text-slate-500 sm:text-sm">
-              Showing 1–{rows.length} of 248 flight logs
+              Showing 1–{rows.length} of {flightLogs.length} flight logs
             </span>
             <div className="flex items-center gap-2 text-sm">
               <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200">

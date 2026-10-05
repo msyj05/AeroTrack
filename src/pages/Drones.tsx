@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom'
 import { ChevronDown, Command, Plus, Search } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import StatusBadge from '../components/StatusBadge'
-import { drones } from '../data/mock'
+import { useData } from "../data/DataContext";
 
 export default function Drones() {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('All statuses')
 
+  const { drones } = useData()
   const list = drones.filter(
     (d) => d.name.toLowerCase().includes(query.toLowerCase()) && (status === 'All statuses' || d.status === status),
   )

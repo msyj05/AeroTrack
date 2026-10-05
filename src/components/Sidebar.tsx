@@ -11,19 +11,20 @@ import {
 } from "lucide-react";
 import Logo from "./Logo";
 import { currentUser } from "../data/mock";
+import { useData } from "../data/DataContext";
 import { useSidebar } from "./SidebarContext";
 
-const links = [
+export default function Sidebar() {
+  const { open, setOpen, setConfirmLogout } = useSidebar();
+  const { flightLogs } = useData();   
+
+  const links = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/flight-logs", label: "Flight Logs", icon: Plane, badge: 248 },
+  { to: "/flight-logs", label: "Flight Logs", icon: Plane, badge: flightLogs.length },
   { to: "/drones", label: "Drones", icon: Command },
   { to: "/batteries", label: "Batteries", icon: BatteryCharging },
   { to: "/settings", label: "Profile / Settings", icon: Settings },
 ];
-
-export default function Sidebar() {
-  const { open, setOpen, setConfirmLogout } = useSidebar();
-
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-40 flex h-dvh w-60 shrink-0 flex-col bg-navy px-3 py-5 transition-transform duration-200 ease-out

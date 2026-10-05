@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Topbar from "../components/Topbar";
 import StatusBadge from "../components/StatusBadge";
-import { batteries } from "../data/mock";
+import { useData } from "../data/DataContext";
 
 const barColor = (health: number) =>
   health >= 80 ? "bg-emerald-600" : health >= 65 ? "bg-brand" : "bg-red-600";
@@ -18,6 +18,7 @@ export default function Batteries() {
   const [query, setQuery] = useState("");
   const [condition, setCondition] = useState("All conditions");
 
+  const { batteries } = useData();
   const rows = batteries.filter(
     (b) =>
       `${b.serial} ${b.model}`.toLowerCase().includes(query.toLowerCase()) &&
@@ -35,19 +36,27 @@ export default function Batteries() {
               <BatteryCharging className="h-4 w-4 text-brand sm:h-5 sm:w-5" />
             }
             label="Avg Health"
-            value="84%"
+            value={`${Math.round(batteries.reduce((s, b) => s + b.health, 0) / batteries.length)}%`}
           />
           <Summary
             icon={<RefreshCw className="h-4 w-4 text-brand sm:h-5 sm:w-5" />}
             label="Avg Cycles"
-            value="112"
+            value={String(
+              Math.round(
+                batteries.reduce((s, b) => s + b.cycles, 0) / batteries.length,
+              ),
+            )}
           />
           <Summary
             icon={
               <AlertTriangle className="h-4 w-4 text-amber-600 sm:h-5 sm:w-5" />
             }
             label="Needs Attention"
-            value="1"
+            value={String(
+              batteries.filter(
+                (b) => b.condition === "Monitor" || b.condition === "Degraded",
+              ).length,
+            )}
           />
         </div>
 
@@ -84,7 +93,10 @@ export default function Batteries() {
                 <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4" />
               </label>
 
-              <button className="btn-primary shrink-0 sm:ml-auto" aria-label="Add battery">
+              <button
+                className="btn-primary shrink-0 sm:ml-auto"
+                aria-label="Add battery"
+              >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add Battery</span>
                 <span className="sm:hidden">Battery</span>
