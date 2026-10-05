@@ -1,20 +1,17 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   AlertTriangle,
   BatteryCharging,
   ChevronDown,
-  Pencil,
   Plus,
   RefreshCw,
   Search,
-  Trash2,
 } from "lucide-react";
 import Topbar from "../components/layout/Topbar";
 import StatusBadge from "../components/ui/StatusBadge";
 import { useData } from "../data/DataContext";
 import AddBatteryDialog from "../components/batteries/AddBatteryDialog";
-import { Battery } from "../types";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
 
 const barColor = (health: number) =>
   health >= 80 ? "bg-emerald-600" : health >= 65 ? "bg-brand" : "bg-red-600";
@@ -24,19 +21,14 @@ export default function Batteries() {
   const [condition, setCondition] = useState("All conditions");
   const [addOpen, setAddOpen] = useState(false);
 
-  const { batteries, deleteBattery } = useData()
-  const [editTarget, setEditTarget] = useState<Battery | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<Battery | null>(null)
+  const { batteries } = useData();
+
   const rows = batteries.filter(
     (b) =>
       `${b.serial} ${b.model}`.toLowerCase().includes(query.toLowerCase()) &&
       (condition === "All conditions" || b.condition === condition),
   );
-  const confirmDelete = () => {
-  if (!pendingDelete) return;
-  deleteBattery(pendingDelete.serial);
-  setPendingDelete(null);
-};
+
   return (
     <>
       <Topbar title="Batteries" />
@@ -120,56 +112,45 @@ export default function Batteries() {
           {/* Mobile: card list */}
           <ul className="divide-y divide-slate-100 border-t border-slate-100 md:hidden">
             {rows.map((b) => (
-              <li key={b.serial} className="px-4 py-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-mono font-medium">{b.serial}</p>
-                    <p className="mt-0.5 truncate text-sm text-slate-500">
-                      {b.model}
-                    </p>
+              <li key={b.serial}>
+                <Link
+                  to={`/batteries/${b.serial}`}
+                  className="block px-4 py-4 transition active:bg-slate-50"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-mono font-medium">{b.serial}</p>
+                      <p className="mt-0.5 truncate text-sm text-slate-500">
+                        {b.model}
+                      </p>
+                    </div>
+                    <StatusBadge label={b.condition} />
                   </div>
-                  <StatusBadge label={b.condition} />
-                </div>
 
-                <div className="mt-3">
-                  <div className="mb-1 flex justify-between font-mono text-xs text-slate-500">
-                    <span>{b.cycles} cycles</span>
-                    <span>{b.health}%</span>
+                  <div className="mt-3">
+                    <div className="mb-1 flex justify-between font-mono text-xs text-slate-500">
+                      <span>{b.cycles} cycles</span>
+                      <span>{b.health}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-100">
+                      <div
+                        className={`h-1.5 rounded-full ${barColor(b.health)}`}
+                        style={{ width: `${b.health}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 rounded-full bg-slate-100">
-                    <div
-                      className={`h-1.5 rounded-full ${barColor(b.health)}`}
-                      style={{ width: `${b.health}%` }}
-                    />
-                  </div>
-                </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                  <span>
-                    Last used:{" "}
-                    <span className="font-medium text-ink">{b.lastUsed}</span>
-                  </span>
-                  <span>
-                    Flights:{" "}
-                    <span className="font-medium text-ink">{b.flights}</span>
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setEditTarget(b)}
-                    className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setPendingDelete(b)}
-                    className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-red-600 transition hover:bg-red-50"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Delete
-                  </button>
-                </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                    <span>
+                      Last used:{" "}
+                      <span className="font-medium text-ink">{b.lastUsed}</span>
+                    </span>
+                    <span>
+                      Flights:{" "}
+                      <span className="font-medium text-ink">{b.flights}</span>
+                    </span>
+                  </div>
+                </Link>
               </li>
             ))}
             {rows.length === 0 && (
@@ -196,17 +177,21 @@ export default function Batteries() {
                     </th>
                   ))}
                   <th className="px-5 py-3 text-right font-medium">Flights</th>
-                  <th className="w-20 px-5 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((b) => (
                   <tr
                     key={b.serial}
-                    className="border-b border-slate-100 last:border-0"
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60"
                   >
                     <td className="px-5 py-4 font-mono font-medium">
-                      {b.serial}
+                      <Link
+                        to={`/batteries/${b.serial}`}
+                        className="hover:text-brand"
+                      >
+                        {b.serial}
+                      </Link>
                     </td>
                     <td className="px-5 py-4 text-slate-500">{b.model}</td>
                     <td className="px-5 py-4">
@@ -230,30 +215,12 @@ export default function Batteries() {
                     <td className="px-5 py-4 text-right font-medium">
                       {b.flights}
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => setEditTarget(b)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-ink"
-                          aria-label={`Edit ${b.serial}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => setPendingDelete(b)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                          aria-label={`Delete ${b.serial}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={6}
                       className="px-5 py-10 text-center text-slate-500"
                     >
                       No batteries match. Clear the search or condition filter.
@@ -265,24 +232,8 @@ export default function Batteries() {
           </div>
         </div>
       </div>
+
       <AddBatteryDialog open={addOpen} onClose={() => setAddOpen(false)} />
-
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        title={pendingDelete ? `Delete ${pendingDelete.serial}?` : ""}
-        description="This battery will be removed from your fleet. This cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Keep"
-        tone="danger"
-        onConfirm={confirmDelete}
-        onCancel={() => setPendingDelete(null)}
-      />
-
-      <AddBatteryDialog
-        open={editTarget !== null}
-        onClose={() => setEditTarget(null)}
-        initialBattery={editTarget ?? undefined}
-      />
     </>
   );
 }

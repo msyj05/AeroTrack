@@ -1,34 +1,23 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronDown, Command, Pencil, Plus, Search, Trash2 } from 'lucide-react'
-import Topbar from '../components/layout/Topbar'
-import StatusBadge from '../components/ui/StatusBadge'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ChevronDown, Command, Plus, Search } from "lucide-react";
+import Topbar from "../components/layout/Topbar";
+import StatusBadge from "../components/ui/StatusBadge";
 import { useData } from "../data/DataContext";
-import AddDroneDialog from "../components/drones/DroneDialog";
-import type { Drone, DroneStatus } from "../types";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
+import DroneDialog from "../components/drones/DroneDialog";
 
 export default function Drones() {
-  const [query, setQuery] = useState('')
-  const [status, setStatus] = useState('All statuses')
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("All statuses");
   const [addOpen, setAddOpen] = useState(false);
 
-  const { drones, updateDrone, deleteDrone } = useData();
-  const [editTarget, setEditTarget] = useState<Drone | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<Drone | null>(null);
+  const { drones } = useData();
+
   const list = drones.filter(
-    (d) => d.name.toLowerCase().includes(query.toLowerCase()) && (status === 'All statuses' || d.status === status),
-  )
-  const toggleStatus = (drone: Drone) => {
-  const nextStatus: DroneStatus =
-    drone.status === "Ready" ? "In Maintenance" : "Ready";
-  updateDrone(drone.id, { status: nextStatus });
-}
-  const confirmDelete = () => {
-    if (!pendingDelete) return;
-    deleteDrone(pendingDelete.id);
-    setPendingDelete(null);
-  };
+    (d) =>
+      d.name.toLowerCase().includes(query.toLowerCase()) &&
+      (status === "All statuses" || d.status === status),
+  );
 
   return (
     <>
@@ -75,7 +64,11 @@ export default function Drones() {
 
         <div className="grid gap-5 lg:grid-cols-2">
           {list.map((d) => (
-            <article key={d.id} className="card p-4 sm:p-6">
+            <Link
+              key={d.id}
+              to={`/drones/${d.id}`}
+              className="card block p-4 transition hover:border-brand/40 hover:shadow-md sm:p-6"
+            >
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink text-white">
                   <Command className="h-5 w-5" />
@@ -94,36 +87,7 @@ export default function Drones() {
                 <Stat value={`${d.airTimeHours}h`} label="Air time" />
                 <Stat value={d.lastFlight} label="Last flight" />
               </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <Link to="/flight-logs" className="btn-outline">
-                  View logs
-                </Link>
-                <button
-                  onClick={() => toggleStatus(d)}
-                  className={d.status === "Ready" ? "btn-dark" : "btn-primary"}
-                >
-                  {d.status === "Ready" ? "Send to maintenance" : "Mark ready"}
-                </button>
-              </div>
-
-              <div className="mt-2 grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setEditTarget(d)}
-                  className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => setPendingDelete(d)}
-                  className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Delete
-                </button>
-              </div>
-            </article>
+            </Link>
           ))}
         </div>
 
@@ -133,24 +97,8 @@ export default function Drones() {
           </p>
         )}
       </div>
-      <AddDroneDialog open={addOpen} onClose={() => setAddOpen(false)} />
 
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        title={pendingDelete ? `Delete ${pendingDelete.name}?` : ""}
-        description="This drone will be removed from your fleet. This cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Keep"
-        tone="danger"
-        onConfirm={confirmDelete}
-        onCancel={() => setPendingDelete(null)}
-      />
-
-      <AddDroneDialog
-        open={editTarget !== null}
-        onClose={() => setEditTarget(null)}
-        initialDrone={editTarget ?? undefined}
-      />
+      <DroneDialog open={addOpen} onClose={() => setAddOpen(false)} />
     </>
   );
 }
@@ -161,5 +109,5 @@ function Stat({ value, label }: { value: string; label: string }) {
       <p className="font-display text-sm font-semibold">{value}</p>
       <p className="text-xs text-slate-500">{label}</p>
     </div>
-  )
+  );
 }

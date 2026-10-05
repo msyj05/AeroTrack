@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { ChevronDown, ShieldCheck } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import Topbar from '../components/layout/Topbar'
 import { currentUser } from '../data/mock'
 
@@ -117,8 +117,12 @@ export default function Settings() {
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             {(["current", "next", "confirm"] as const).map((k) => (
               <div key={k}>
-                <label className="mb-1.5 block text-sm capitalize">
-                  {k === "next" ? "New" : k}
+                <label className="mb-1.5 block text-sm">
+                  {k === "current"
+                    ? "Current Password"
+                    : k === "next"
+                      ? "New Password"
+                      : "Confirm Password"}
                 </label>
                 <input
                   type="password"
@@ -132,18 +136,14 @@ export default function Settings() {
           {mismatch && (
             <p className="mt-3 text-sm text-red-600">Passwords do not match.</p>
           )}
-          <div className="mt-5 flex items-center gap-4">
-            <button type="submit" className="btn-primary">
+          <div className="mt-5 flex justify-end">
+            <button
+              type="submit"
+              disabled={!meetsPolicy || mismatch}
+              className="btn-primary w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-50"
+            >
               Update password
             </button>
-            <span
-              className={`flex items-center gap-1.5 text-xs ${meetsPolicy ? "text-emerald-700" : "text-slate-500"}`}
-            >
-              <ShieldCheck className="h-4 w-4" />
-              {meetsPolicy
-                ? "Meets 12 char policy"
-                : "Use at least 12 characters"}
-            </span>
           </div>
         </form>
       </div>
