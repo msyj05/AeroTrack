@@ -16,32 +16,79 @@ const toMin = (t: string) => {
   return h * 60 + m;
 };
 
-export default function FlightLogForm() {
-  const navigate = useNavigate();
-  const { drones, batteries, flightLogs, addFlightLog } = useData();
+/**
+ * Convert a stored FlightLog (formatted date, numeric values) back into the
+ * string-based shape the form fields expect.
+ */
+function logToFormState(log: FlightLog): FlightFormState {
+  // "Oct 5, 2026" → "2026-10-05"
+  const dateObj = new Date(log.date);
+  const date = Number.isNaN(dateObj.getTime())
+    ? ""
+    : `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
 
-  const [f, setF] = useState<FlightFormState>({
-    date: "",
-    location: "",
-    reporting: "",
-    leaving: "",
-    start: "",
-    end: "",
-    purpose: "",
-    drone: drones[0]?.name ?? "",
-    pilot: currentUser.name,
-    type: "",
-    batterySerial: batteries[0]?.serial ?? "",
+  const str = (v: number | undefined) => (v === undefined ? "" : String(v));
+
+  return {
+    date,
+    location: log.location,
+    reporting: log.reporting ?? "",
+    leaving: log.leaving ?? "",
+    start: log.start,
+    end: log.end,
+    purpose: log.purpose ?? "",
+    drone: log.drone,
+    pilot: log.pilot,
+    type: log.flightType ?? "",
+    batterySerial: log.battery,
     cycles: "",
-    initialPct: "",
-    finalPct: "",
-    initialTemp: "",
-    finalTemp: "",
-    notes: "",
-    incident: "No issues to report",
-  });
+    initialPct: str(log.initialPct),
+    finalPct: str(log.finalPct),
+    initialTemp: str(log.initialTemp),
+    finalTemp: str(log.finalTemp),
+    notes: log.notes ?? "",
+    incident: log.incident ?? "No issues to report",
+  };
+}
 
-  const set: FlightFormChange = (k) => (e) => setF({ ...f, [k]: e.target.value });
+interface Props {
+  /** When provided, the form runs in edit mode. */
+  initialLog?: FlightLog;
+}
+
+export default function FlightLogForm({ initialLog }: Props) {
+  const navigate = useNavigate();
+  const { drones, batteries, flightLogs, addFlightLog, updateFlightLog } =
+    useData();
+  const isEdit = !!initialLog;
+
+  const [f, setF] = useState<FlightFormState>(() =>
+    initialLog
+      ? logToFormState(initialLog)
+      : {
+          date: "",
+          location: "",
+          reporting: "",
+          leaving: "",
+          start: "",
+          end: "",
+          purpose: "",
+          drone: drones[0]?.name ?? "",
+          pilot: currentUser.name,
+          type: "",
+          batterySerial: batteries[0]?.serial ?? "",
+          cycles: "",
+          initialPct: "",
+          finalPct: "",
+          initialTemp: "",
+          finalTemp: "",
+          notes: "",
+          incident: "No issues to report",
+        },
+  );
+
+  const set: FlightFormChange = (k) => (e) =>
+    setF({ ...f, [k]: e.target.value });
 
   const endInvalid =
     f.start !== "" && f.end !== "" && toMin(f.end) <= toMin(f.start);
@@ -63,12 +110,16 @@ export default function FlightLogForm() {
 
   const checks = [
     { label: "Airspace authorization verified", done: true },
-    { label: "Battery temp within limits", done: tempDelta !== null && tempDelta <= 20 },
+    {
+      label: "Battery temp within limits",
+      done: tempDelta !== null && tempDelta <= 20,
+    },
     { label: "End time entered", done: !!f.end && !endInvalid },
     { label: "Imagery attached (4 files)", done: true },
   ];
 
-  const canSave = !!f.date && !!f.location && !!f.start && !!f.end && !endInvalid;
+  const canSave =
+    !!f.date && !!f.location && !!f.start && !!f.end && !endInvalid;
 
   const save = () => {
     if (!canSave) return;
@@ -81,42 +132,68 @@ export default function FlightLogForm() {
       year: "numeric",
     });
 
-    // Next FL-XXXX from existing logs
-    const highest = flightLogs.reduce((max, l) => {
-      const n = Number(l.id.replace("FL-", ""));
-      return Number.isFinite(n) && n > max ? n : max;
-    }, 2474);
-
     const status: FlightLog["status"] =
       f.incident === "No issues to report" ? "Completed" : "Review";
 
     const num = (v: string) => (v === "" ? undefined : Number(v));
 
-    const newLog: FlightLog = {
-      id: `FL-${highest + 1}`,
-      date: formatted,
-      pilot: f.pilot,
-      drone: f.drone,
-      location: f.location,
-      start: f.start,
-      end: f.end,
-      durationMin: duration ?? 0,
-      battery: f.batterySerial,
-      status,
-      reporting: f.reporting || undefined,
-      leaving: f.leaving || undefined,
-      purpose: f.purpose || undefined,
-      flightType: f.type || undefined,
-      initialPct: num(f.initialPct),
-      finalPct: num(f.finalPct),
-      initialTemp: num(f.initialTemp),
-      finalTemp: num(f.finalTemp),
-      notes: f.notes || undefined,
-      incident: f.incident || undefined,
-    };
+    if (isEdit && initialLog) {
+      // Update only the mutable fields; keep id stable.
+      updateFlightLog(initialLog.id, {
+        date: formatted,
+        pilot: f.pilot,
+        drone: f.drone,
+        location: f.location,
+        start: f.start,
+        end: f.end,
+        durationMin: duration ?? 0,
+        battery: f.batterySerial,
+        status,
+        reporting: f.reporting || undefined,
+        leaving: f.leaving || undefined,
+        purpose: f.purpose || undefined,
+        flightType: f.type || undefined,
+        initialPct: num(f.initialPct),
+        finalPct: num(f.finalPct),
+        initialTemp: num(f.initialTemp),
+        finalTemp: num(f.finalTemp),
+        notes: f.notes || undefined,
+        incident: f.incident || undefined,
+      });
+      navigate(`/flight-logs/${initialLog.id}`);
+    } else {
+      // Next FL-XXXX from existing logs
+      const highest = flightLogs.reduce((max, l) => {
+        const n = Number(l.id.replace("FL-", ""));
+        return Number.isFinite(n) && n > max ? n : max;
+      }, 2474);
 
-    addFlightLog(newLog);
-    navigate("/flight-logs");
+      const newLog: FlightLog = {
+        id: `FL-${highest + 1}`,
+        date: formatted,
+        pilot: f.pilot,
+        drone: f.drone,
+        location: f.location,
+        start: f.start,
+        end: f.end,
+        durationMin: duration ?? 0,
+        battery: f.batterySerial,
+        status,
+        reporting: f.reporting || undefined,
+        leaving: f.leaving || undefined,
+        purpose: f.purpose || undefined,
+        flightType: f.type || undefined,
+        initialPct: num(f.initialPct),
+        finalPct: num(f.finalPct),
+        initialTemp: num(f.initialTemp),
+        finalTemp: num(f.finalTemp),
+        notes: f.notes || undefined,
+        incident: f.incident || undefined,
+      };
+
+      addFlightLog(newLog);
+      navigate("/flight-logs");
+    }
   };
 
   return (
@@ -133,17 +210,23 @@ export default function FlightLogForm() {
             </button>
             <div className="min-w-0">
               <h1 className="truncate font-display text-lg font-semibold sm:text-xl">
-                Add flight log
+                {isEdit ? `Edit ${initialLog?.id}` : "Add flight log"}
               </h1>
               <p className="truncate text-sm text-slate-500">
-                Fill in the details below
+                {isEdit
+                  ? "Update the details and save"
+                  : "Fill in the details below"}
               </p>
             </div>
           </div>
 
           <div className="flex gap-3">
             <button
-              onClick={() => navigate("/flight-logs")}
+              onClick={() =>
+                isEdit && initialLog
+                  ? navigate(`/flight-logs/${initialLog.id}`)
+                  : navigate("/flight-logs")
+              }
               className="btn-outline flex-1 sm:flex-none"
             >
               Cancel
@@ -154,7 +237,7 @@ export default function FlightLogForm() {
               className="btn-primary flex-1 sm:flex-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Check className="h-4 w-4" />
-              Save Flight Log
+              {isEdit ? "Save changes" : "Save Flight Log"}
             </button>
           </div>
         </div>
@@ -193,7 +276,9 @@ export default function FlightLogForm() {
 
           <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-            Autosave on. Your draft is synced to the ops cloud.
+            {isEdit
+              ? "Changes are saved to the ops cloud."
+              : "Autosave on. Your draft is synced to the ops cloud."}
           </div>
         </aside>
       </div>

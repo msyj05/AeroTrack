@@ -9,6 +9,7 @@ import FlightDetails from './pages/FlightDetails'
 import Drones from './pages/Drones'
 import Batteries from './pages/Batteries'
 import Settings from './pages/Settings'
+import EditFlightLog from "./pages/EditFlightLog";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/flight-logs" element={<FlightLogs />} />
         <Route path="/flight-logs/new" element={<AddFlightLog />} />
+        <Route path="/flight-logs/:id/edit" element={<EditFlightLog />} />
         <Route path="/flight-logs/:id" element={<FlightDetails />} />
         <Route path="/drones" element={<Drones />} />
         <Route path="/batteries" element={<Batteries />} />
@@ -28,5 +30,5 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
-  )
+  );
 }

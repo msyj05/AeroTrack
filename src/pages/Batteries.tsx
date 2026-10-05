@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   BatteryCharging,
   ChevronDown,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -24,6 +25,7 @@ export default function Batteries() {
   const [addOpen, setAddOpen] = useState(false);
 
   const { batteries, deleteBattery } = useData()
+  const [editTarget, setEditTarget] = useState<Battery | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Battery | null>(null)
   const rows = batteries.filter(
     (b) =>
@@ -152,13 +154,22 @@ export default function Batteries() {
                     <span className="font-medium text-ink">{b.flights}</span>
                   </span>
                 </div>
-                <button
-                  onClick={() => setPendingDelete(b)}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Delete battery
-                </button>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setEditTarget(b)}
+                    className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setPendingDelete(b)}
+                    className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-red-600 transition hover:bg-red-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete
+                  </button>
+                </div>
               </li>
             ))}
             {rows.length === 0 && (
@@ -185,7 +196,7 @@ export default function Batteries() {
                     </th>
                   ))}
                   <th className="px-5 py-3 text-right font-medium">Flights</th>
-                  <th className="w-12 px-5 py-3"></th>
+                  <th className="w-20 px-5 py-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -219,14 +230,23 @@ export default function Batteries() {
                     <td className="px-5 py-4 text-right font-medium">
                       {b.flights}
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <button
-                        onClick={() => setPendingDelete(b)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                        aria-label={`Delete ${b.serial}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setEditTarget(b)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-ink"
+                          aria-label={`Edit ${b.serial}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setPendingDelete(b)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                          aria-label={`Delete ${b.serial}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -256,6 +276,12 @@ export default function Batteries() {
         tone="danger"
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
+      />
+
+      <AddBatteryDialog
+        open={editTarget !== null}
+        onClose={() => setEditTarget(null)}
+        initialBattery={editTarget ?? undefined}
       />
     </>
   );

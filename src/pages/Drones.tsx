@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, Command, Plus, Search, Trash2 } from 'lucide-react'
+import { ChevronDown, Command, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import Topbar from '../components/layout/Topbar'
 import StatusBadge from '../components/ui/StatusBadge'
 import { useData } from "../data/DataContext";
-import AddDroneDialog from "../components/drones/AddDroneDialog";
+import AddDroneDialog from "../components/drones/DroneDialog";
 import type { Drone, DroneStatus } from "../types";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 
@@ -14,6 +14,7 @@ export default function Drones() {
   const [addOpen, setAddOpen] = useState(false);
 
   const { drones, updateDrone, deleteDrone } = useData();
+  const [editTarget, setEditTarget] = useState<Drone | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Drone | null>(null);
   const list = drones.filter(
     (d) => d.name.toLowerCase().includes(query.toLowerCase()) && (status === 'All statuses' || d.status === status),
@@ -87,11 +88,13 @@ export default function Drones() {
                 </div>
                 <StatusBadge label={d.status} />
               </div>
+
               <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3">
                 <Stat value={String(d.flights)} label="Flights" />
                 <Stat value={`${d.airTimeHours}h`} label="Air time" />
                 <Stat value={d.lastFlight} label="Last flight" />
               </div>
+
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Link to="/flight-logs" className="btn-outline">
                   View logs
@@ -103,13 +106,23 @@ export default function Drones() {
                   {d.status === "Ready" ? "Send to maintenance" : "Mark ready"}
                 </button>
               </div>
-              <button
-                onClick={() => setPendingDelete(d)}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete drone
-              </button>
+
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setEditTarget(d)}
+                  className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => setPendingDelete(d)}
+                  className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </button>
+              </div>
             </article>
           ))}
         </div>
@@ -121,17 +134,23 @@ export default function Drones() {
         )}
       </div>
       <AddDroneDialog open={addOpen} onClose={() => setAddOpen(false)} />
-        
+
       <ConfirmDialog
-  open={pendingDelete !== null}
-  title={pendingDelete ? `Delete ${pendingDelete.name}?` : ""}
-  description="This drone will be removed from your fleet. This cannot be undone."
-  confirmLabel="Delete"
-  cancelLabel="Keep"
-  tone="danger"
-  onConfirm={confirmDelete}
-  onCancel={() => setPendingDelete(null)}
-/>
+        open={pendingDelete !== null}
+        title={pendingDelete ? `Delete ${pendingDelete.name}?` : ""}
+        description="This drone will be removed from your fleet. This cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        tone="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+
+      <AddDroneDialog
+        open={editTarget !== null}
+        onClose={() => setEditTarget(null)}
+        initialDrone={editTarget ?? undefined}
+      />
     </>
   );
 }

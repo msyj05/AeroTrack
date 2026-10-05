@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import { useData } from "../../data/DataContext";
 import type { Drone, DroneStatus } from "../../types";
@@ -7,6 +7,8 @@ import Modal from "../ui/Modal";
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** When provided, the dialog runs in edit mode. */
+  initialDrone?: Drone;
 }
 
 const fullToday = () =>
@@ -16,7 +18,6 @@ const fullToday = () =>
     year: "numeric",
   });
 
-/** Convert a yyyy-mm-dd string to "Mon DD, YYYY", or today if empty. */
 const formatLastFlight = (v: string) => {
   if (!v) return fullToday();
   const [y, m, d] = v.split("-").map(Number);
@@ -27,8 +28,15 @@ const formatLastFlight = (v: string) => {
   });
 };
 
-export default function AddDroneDialog({ open, onClose }: Props) {
-  const { drones, addDrone } = useData();
+const dateToInputValue = (formatted: string) => {
+  const d = new Date(formatted);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+export default function DroneDialog({ open, onClose, initialDrone }: Props) {
+  const { drones, addDrone, updateDrone } = useData();
+  const isEdit = !!initialDrone;
 
   const [name, setName] = useState("");
   const [serial, setSerial] = useState("");
@@ -38,20 +46,28 @@ export default function AddDroneDialog({ open, onClose }: Props) {
   const [lastFlight, setLastFlight] = useState("");
   const [error, setError] = useState("");
 
-  const reset = () => {
-    setName("");
-    setSerial("");
-    setStatus("Ready");
-    setFlights("0");
-    setAirTimeHours("0");
-    setLastFlight("");
+  // Sync form state whenever the dialog opens
+  useEffect(() => {
+    if (!open) return;
+    if (initialDrone) {
+      setName(initialDrone.name);
+      setSerial(initialDrone.serial);
+      setStatus(initialDrone.status);
+      setFlights(String(initialDrone.flights));
+      setAirTimeHours(String(initialDrone.airTimeHours));
+      setLastFlight(dateToInputValue(initialDrone.lastFlight));
+    } else {
+      setName("");
+      setSerial("");
+      setStatus("Ready");
+      setFlights("0");
+      setAirTimeHours("0");
+      setLastFlight("");
+    }
     setError("");
-  };
+  }, [open, initialDrone]);
 
-  const close = () => {
-    reset();
-    onClose();
-  };
+  const close = () => onClose();
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -65,8 +81,13 @@ export default function AddDroneDialog({ open, onClose }: Props) {
       return;
     }
 
+    // Duplicate check, ignoring the current drone in edit mode
     if (
-      drones.some((d) => d.serial.toLowerCase() === trimmedSerial.toLowerCase())
+      drones.some(
+        (d) =>
+          d.id !== initialDrone?.id &&
+          d.serial.toLowerCase() === trimmedSerial.toLowerCase(),
+      )
     ) {
       setError("A drone with this serial already exists.");
       return;
@@ -85,31 +106,46 @@ export default function AddDroneDialog({ open, onClose }: Props) {
       return;
     }
 
-    // Next sequential id (d5, d6, ...)
-    const highest = drones.reduce((max, d) => {
-      const n = Number(d.id.replace("d", ""));
-      return Number.isFinite(n) && n > max ? n : max;
-    }, 0);
+    if (isEdit && initialDrone) {
+      updateDrone(initialDrone.id, {
+        name: trimmedName,
+        serial: trimmedSerial,
+        status,
+        flights: flightsNum,
+        airTimeHours: hoursNum,
+        lastFlight: formatLastFlight(lastFlight),
+      });
+    } else {
+      const highest = drones.reduce((max, d) => {
+        const n = Number(d.id.replace("d", ""));
+        return Number.isFinite(n) && n > max ? n : max;
+      }, 0);
 
-    const newDrone: Drone = {
-      id: `d${highest + 1}`,
-      name: trimmedName,
-      serial: trimmedSerial,
-      status,
-      flights: flightsNum,
-      airTimeHours: hoursNum,
-      lastFlight: formatLastFlight(lastFlight),
-    };
+      const newDrone: Drone = {
+        id: `d${highest + 1}`,
+        name: trimmedName,
+        serial: trimmedSerial,
+        status,
+        flights: flightsNum,
+        airTimeHours: hoursNum,
+        lastFlight: formatLastFlight(lastFlight),
+      };
 
-    addDrone(newDrone);
+      addDrone(newDrone);
+    }
+
     close();
   };
 
   return (
     <Modal
       open={open}
-      title="Add drone"
-      description="Register a new or in-service airframe."
+      title={isEdit ? "Edit drone" : "Add drone"}
+      description={
+        isEdit
+          ? "Update the airframe details and save."
+          : "Register a new or in-service airframe."
+      }
       maxWidth="max-w-md"
       onClose={close}
       footer={
@@ -119,15 +155,15 @@ export default function AddDroneDialog({ open, onClose }: Props) {
           </button>
           <button
             type="submit"
-            form="add-drone-form"
+            form="drone-form"
             className="btn-primary flex-1"
           >
-            Add drone
+            {isEdit ? "Save changes" : "Add drone"}
           </button>
         </>
       }
     >
-      <form id="add-drone-form" onSubmit={submit} className="space-y-4">
+      <form id="drone-form" onSubmit={submit} className="space-y-4">
         <div>
           <label className="mb-1.5 block text-sm text-slate-600">Name</label>
           <input

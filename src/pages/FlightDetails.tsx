@@ -101,10 +101,13 @@ export default function FlightDetails() {
               <Trash2 className="h-4 w-4" />
               Delete
             </button>
-            <button className="btn-dark flex-1 sm:flex-none">
+            <Link
+              to={`/flight-logs/${log.id}/edit`}
+              className="btn-dark flex-1 sm:flex-none"
+            >
               <Pencil className="h-4 w-4" />
               Edit
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -144,7 +147,10 @@ export default function FlightDetails() {
         </div>
 
         <div className="grid gap-5 lg:grid-cols-3">
-          <FlightLogPanel icon={<Plane className="h-4 w-4" />} title="Flight information">
+          <FlightLogPanel
+            icon={<Plane className="h-4 w-4" />}
+            title="Flight information"
+          >
             <Row k="Flight date" v={log.date} />
             <Row k="Reporting time" v={dash(log.reporting)} />
             <Row k="Leaving time" v={dash(log.leaving)} />
@@ -153,7 +159,10 @@ export default function FlightDetails() {
             <Row k="Flight type" v={dash(log.flightType)} />
           </FlightLogPanel>
 
-          <FlightLogPanel icon={<Command className="h-4 w-4" />} title="Drone & pilot">
+          <FlightLogPanel
+            icon={<Command className="h-4 w-4" />}
+            title="Drone & pilot"
+          >
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink text-white">
                 <Command className="h-5 w-5" />
@@ -169,11 +178,18 @@ export default function FlightDetails() {
             <Row k="Pilot" v={log.pilot} />
             <Row
               k="Airframe hours"
-              v={drone ? `${drone.airTimeHours} h · ${drone.flights} flights` : "—"}
+              v={
+                drone
+                  ? `${drone.airTimeHours} h · ${drone.flights} flights`
+                  : "—"
+              }
             />
           </FlightLogPanel>
 
-          <FlightLogPanel icon={<BatteryCharging className="h-4 w-4" />} title="Battery">
+          <FlightLogPanel
+            icon={<BatteryCharging className="h-4 w-4" />}
+            title="Battery"
+          >
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-medium">{dash(log.battery)}</span>
               {battery && <StatusBadge label={battery.condition} />}
@@ -188,13 +204,18 @@ export default function FlightDetails() {
               {log.finalPct !== undefined
                 ? `Landed at ${log.finalPct}%`
                 : "Landed percentage not recorded"}
-              {battery && ` · health ${battery.health}% · ${battery.cycles} cycles`}
+              {battery &&
+                ` · health ${battery.health}% · ${battery.cycles} cycles`}
             </p>
             <div className="mt-4">
               <Row k="Model" v={battery?.model ?? "—"} />
               <Row
                 k="Temp"
-                v={hasTempRange ? `${log.initialTemp}°C → ${log.finalTemp}°C` : "—"}
+                v={
+                  hasTempRange
+                    ? `${log.initialTemp}°C → ${log.finalTemp}°C`
+                    : "—"
+                }
               />
               <Row k="Condition" v={battery?.condition ?? "—"} />
             </div>

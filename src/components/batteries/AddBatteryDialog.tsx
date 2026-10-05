@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import { useData } from "../../data/DataContext";
 import type { Battery, BatteryCondition } from "../../types";
@@ -7,12 +7,13 @@ import Modal from "../ui/Modal";
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** When provided, the dialog runs in edit mode. */
+  initialBattery?: Battery;
 }
 
 const shortToday = () =>
   new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-/** Convert a yyyy-mm-dd string to "Mon DD", or today if empty. */
 const formatLastUsed = (v: string) => {
   if (!v) return shortToday();
   const [y, m, d] = v.split("-").map(Number);
@@ -22,8 +23,19 @@ const formatLastUsed = (v: string) => {
   });
 };
 
-export default function AddBatteryDialog({ open, onClose }: Props) {
-  const { batteries, addBattery } = useData();
+const dateToInputValue = (formatted: string) => {
+  const d = new Date(formatted);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+export default function AddBatteryDialog({
+  open,
+  onClose,
+  initialBattery,
+}: Props) {
+  const { batteries, addBattery, updateBattery } = useData();
+  const isEdit = !!initialBattery;
 
   const [serial, setSerial] = useState("");
   const [model, setModel] = useState("");
@@ -34,21 +46,29 @@ export default function AddBatteryDialog({ open, onClose }: Props) {
   const [lastUsed, setLastUsed] = useState("");
   const [error, setError] = useState("");
 
-  const reset = () => {
-    setSerial("");
-    setModel("");
-    setCycles("0");
-    setHealth("100");
-    setFlights("0");
-    setCondition("Excellent");
-    setLastUsed("");
+  useEffect(() => {
+    if (!open) return;
+    if (initialBattery) {
+      setSerial(initialBattery.serial);
+      setModel(initialBattery.model);
+      setCycles(String(initialBattery.cycles));
+      setHealth(String(initialBattery.health));
+      setFlights(String(initialBattery.flights));
+      setCondition(initialBattery.condition);
+      setLastUsed(dateToInputValue(initialBattery.lastUsed));
+    } else {
+      setSerial("");
+      setModel("");
+      setCycles("0");
+      setHealth("100");
+      setFlights("0");
+      setCondition("Excellent");
+      setLastUsed("");
+    }
     setError("");
-  };
+  }, [open, initialBattery]);
 
-  const close = () => {
-    reset();
-    onClose();
-  };
+  const close = () => onClose();
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -64,7 +84,9 @@ export default function AddBatteryDialog({ open, onClose }: Props) {
 
     if (
       batteries.some(
-        (b) => b.serial.toLowerCase() === trimmedSerial.toLowerCase(),
+        (b) =>
+          b.serial !== initialBattery?.serial &&
+          b.serial.toLowerCase() === trimmedSerial.toLowerCase(),
       )
     ) {
       setError("A battery with this serial already exists.");
@@ -90,7 +112,7 @@ export default function AddBatteryDialog({ open, onClose }: Props) {
       return;
     }
 
-    const newBattery: Battery = {
+    const payload = {
       serial: trimmedSerial,
       model: trimmedModel,
       cycles: cyclesNum,
@@ -100,15 +122,24 @@ export default function AddBatteryDialog({ open, onClose }: Props) {
       flights: flightsNum,
     };
 
-    addBattery(newBattery);
+    if (isEdit && initialBattery) {
+      updateBattery(initialBattery.serial, payload);
+    } else {
+      addBattery(payload as Battery);
+    }
+
     close();
   };
 
   return (
     <Modal
       open={open}
-      title="Add battery"
-      description="Register a new or in-service battery pack."
+      title={isEdit ? "Edit battery" : "Add battery"}
+      description={
+        isEdit
+          ? "Update the battery details and save."
+          : "Register a new or in-service battery pack."
+      }
       maxWidth="max-w-md"
       onClose={close}
       footer={
@@ -118,15 +149,15 @@ export default function AddBatteryDialog({ open, onClose }: Props) {
           </button>
           <button
             type="submit"
-            form="add-battery-form"
+            form="battery-form"
             className="btn-primary flex-1"
           >
-            Add battery
+            {isEdit ? "Save changes" : "Add battery"}
           </button>
         </>
       }
     >
-      <form id="add-battery-form" onSubmit={submit} className="space-y-4">
+      <form id="battery-form" onSubmit={submit} className="space-y-4">
         <div>
           <label className="mb-1.5 block text-sm text-slate-600">Serial</label>
           <input
