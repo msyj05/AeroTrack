@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import ConfirmDialog from "./ConfirmDialog";
+import ConfirmDialog from "../ui/ConfirmDialog";
 import { SidebarContext } from "./SidebarContext";
 
 export default function AppLayout() {

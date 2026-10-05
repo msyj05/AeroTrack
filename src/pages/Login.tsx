@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Eye, EyeOff, KeyRound, Mail } from 'lucide-react'
-import AuthShell from '../components/AuthShell'
+import AuthShell from '../components/auth/AuthShell'
 
 export default function Login() {
   const navigate = useNavigate()

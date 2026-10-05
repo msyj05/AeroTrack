@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, ArrowRight, BatteryCharging, Clock, Command, Plane } from 'lucide-react'
-import Topbar from '../components/Topbar'
-import StatCard from '../components/StatCard'
-import StatusBadge from '../components/StatusBadge'
+import Topbar from '../components/layout/Topbar'
+import StatCard from '../components/ui/StatCard'
+import StatusBadge from '../components/ui/StatusBadge'
 import { activityByDay } from '../data/mock'
 import { useData } from '../data/DataContext'
 

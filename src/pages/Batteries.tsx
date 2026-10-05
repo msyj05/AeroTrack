@@ -6,10 +6,14 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Trash2,
 } from "lucide-react";
-import Topbar from "../components/Topbar";
-import StatusBadge from "../components/StatusBadge";
+import Topbar from "../components/layout/Topbar";
+import StatusBadge from "../components/ui/StatusBadge";
 import { useData } from "../data/DataContext";
+import AddBatteryDialog from "../components/batteries/AddBatteryDialog";
+import { Battery } from "../types";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 
 const barColor = (health: number) =>
   health >= 80 ? "bg-emerald-600" : health >= 65 ? "bg-brand" : "bg-red-600";
@@ -17,14 +21,20 @@ const barColor = (health: number) =>
 export default function Batteries() {
   const [query, setQuery] = useState("");
   const [condition, setCondition] = useState("All conditions");
+  const [addOpen, setAddOpen] = useState(false);
 
-  const { batteries } = useData();
+  const { batteries, deleteBattery } = useData()
+  const [pendingDelete, setPendingDelete] = useState<Battery | null>(null)
   const rows = batteries.filter(
     (b) =>
       `${b.serial} ${b.model}`.toLowerCase().includes(query.toLowerCase()) &&
       (condition === "All conditions" || b.condition === condition),
   );
-
+  const confirmDelete = () => {
+  if (!pendingDelete) return;
+  deleteBattery(pendingDelete.serial);
+  setPendingDelete(null);
+};
   return (
     <>
       <Topbar title="Batteries" />
@@ -94,6 +104,7 @@ export default function Batteries() {
               </label>
 
               <button
+                onClick={() => setAddOpen(true)}
                 className="btn-primary shrink-0 sm:ml-auto"
                 aria-label="Add battery"
               >
@@ -141,6 +152,13 @@ export default function Batteries() {
                     <span className="font-medium text-ink">{b.flights}</span>
                   </span>
                 </div>
+                <button
+                  onClick={() => setPendingDelete(b)}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete battery
+                </button>
               </li>
             ))}
             {rows.length === 0 && (
@@ -167,6 +185,7 @@ export default function Batteries() {
                     </th>
                   ))}
                   <th className="px-5 py-3 text-right font-medium">Flights</th>
+                  <th className="w-12 px-5 py-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -200,12 +219,21 @@ export default function Batteries() {
                     <td className="px-5 py-4 text-right font-medium">
                       {b.flights}
                     </td>
+                    <td className="px-5 py-4 text-right">
+                      <button
+                        onClick={() => setPendingDelete(b)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                        aria-label={`Delete ${b.serial}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-5 py-10 text-center text-slate-500"
                     >
                       No batteries match. Clear the search or condition filter.
@@ -217,6 +245,18 @@ export default function Batteries() {
           </div>
         </div>
       </div>
+      <AddBatteryDialog open={addOpen} onClose={() => setAddOpen(false)} />
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={pendingDelete ? `Delete ${pendingDelete.serial}?` : ""}
+        description="This battery will be removed from your fleet. This cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        tone="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </>
   );
 }

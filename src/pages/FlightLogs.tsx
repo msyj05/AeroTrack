@@ -11,8 +11,8 @@ import {
   User,
   X,
 } from "lucide-react";
-import Topbar from "../components/Topbar";
-import StatusBadge from "../components/StatusBadge";
+import Topbar from "../components/layout/Topbar";
+import StatusBadge from "../components/ui/StatusBadge";
 import { useData } from "../data/DataContext";
 import type { FlightStatus } from "../types";
 

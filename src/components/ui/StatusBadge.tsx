@@ -1,4 +1,4 @@
-import type { BatteryCondition, DroneStatus, FlightStatus } from '../types'
+import type { BatteryCondition, DroneStatus, FlightStatus } from '../../types'
 
 type Label = FlightStatus | DroneStatus | BatteryCondition
 

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,8 +10,12 @@ import {
   Timer,
   Trash2,
 } from "lucide-react";
-import StatusBadge from "../components/StatusBadge";
-import ConfirmDialog from "../components/ConfirmDialog";
+import StatusBadge from "../components/ui/StatusBadge";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
+import FlightLogMetric from "../components/flight-logs/FlightLogMetric";
+import FlightLogPanel, {
+  FlightLogRow as Row,
+} from "../components/flight-logs/FlightLogPanel";
 import { useData } from "../data/DataContext";
 
 const dash = (v?: string | number) =>
@@ -39,12 +43,11 @@ export default function FlightDetails() {
   const drone = drones.find((d) => d.name === log.drone);
   const battery = batteries.find((b) => b.serial === log.battery);
 
-const handleDelete = () => {
-  if (!log) return;
-  deleteFlightLog(log.id);
-  setConfirmDelete(false);
-  navigate("/flight-logs");
-};
+  const handleDelete = () => {
+    deleteFlightLog(log.id);
+    setConfirmDelete(false);
+    navigate("/flight-logs");
+  };
 
   // Derived values that only exist if both ends are present
   const hasBatteryRange =
@@ -58,6 +61,8 @@ const handleDelete = () => {
   const tempDelta = hasTempRange
     ? (log.finalTemp as number) - (log.initialTemp as number)
     : null;
+
+  const flagged = log.incident && log.incident !== "No issues to report";
 
   return (
     <>
@@ -106,14 +111,13 @@ const handleDelete = () => {
 
       <div className="space-y-5 p-4 sm:p-8">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {" "}
-          <Metric
+          <FlightLogMetric
             icon={<Timer className="h-4 w-4" />}
             label="Duration"
             value={`${log.durationMin} min`}
             sub={`${log.start} → ${log.end}`}
           />
-          <Metric
+          <FlightLogMetric
             icon={<BatteryCharging className="h-4 w-4" />}
             label="Battery used"
             value={batteryUsed !== null ? `${batteryUsed}%` : "—"}
@@ -123,7 +127,7 @@ const handleDelete = () => {
                 : `Battery ${dash(log.battery)}`
             }
           />
-          <Metric
+          <FlightLogMetric
             icon={<Thermometer className="h-4 w-4" />}
             label="Temp delta"
             value={
@@ -140,19 +144,16 @@ const handleDelete = () => {
         </div>
 
         <div className="grid gap-5 lg:grid-cols-3">
-          <Panel
-            icon={<Plane className="h-4 w-4" />}
-            title="Flight information"
-          >
+          <FlightLogPanel icon={<Plane className="h-4 w-4" />} title="Flight information">
             <Row k="Flight date" v={log.date} />
             <Row k="Reporting time" v={dash(log.reporting)} />
             <Row k="Leaving time" v={dash(log.leaving)} />
             <Row k="Location" v={log.location} />
             <Row k="Purpose" v={dash(log.purpose)} />
             <Row k="Flight type" v={dash(log.flightType)} />
-          </Panel>
+          </FlightLogPanel>
 
-          <Panel icon={<Command className="h-4 w-4" />} title="Drone & pilot">
+          <FlightLogPanel icon={<Command className="h-4 w-4" />} title="Drone & pilot">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink text-white">
                 <Command className="h-5 w-5" />
@@ -168,15 +169,11 @@ const handleDelete = () => {
             <Row k="Pilot" v={log.pilot} />
             <Row
               k="Airframe hours"
-              v={
-                drone
-                  ? `${drone.airTimeHours} h · ${drone.flights} flights`
-                  : "—"
-              }
+              v={drone ? `${drone.airTimeHours} h · ${drone.flights} flights` : "—"}
             />
-          </Panel>
+          </FlightLogPanel>
 
-          <Panel icon={<BatteryCharging className="h-4 w-4" />} title="Battery">
+          <FlightLogPanel icon={<BatteryCharging className="h-4 w-4" />} title="Battery">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-medium">{dash(log.battery)}</span>
               {battery && <StatusBadge label={battery.condition} />}
@@ -191,22 +188,17 @@ const handleDelete = () => {
               {log.finalPct !== undefined
                 ? `Landed at ${log.finalPct}%`
                 : "Landed percentage not recorded"}
-              {battery &&
-                ` · health ${battery.health}% · ${battery.cycles} cycles`}
+              {battery && ` · health ${battery.health}% · ${battery.cycles} cycles`}
             </p>
             <div className="mt-4">
               <Row k="Model" v={battery?.model ?? "—"} />
               <Row
                 k="Temp"
-                v={
-                  hasTempRange
-                    ? `${log.initialTemp}°C → ${log.finalTemp}°C`
-                    : "—"
-                }
+                v={hasTempRange ? `${log.initialTemp}°C → ${log.finalTemp}°C` : "—"}
               />
               <Row k="Condition" v={battery?.condition ?? "—"} />
             </div>
-          </Panel>
+          </FlightLogPanel>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[2fr_1fr]">
@@ -221,7 +213,7 @@ const handleDelete = () => {
                 No notes were recorded for this flight.
               </p>
             )}
-            {log.incident && log.incident !== "No issues to report" && (
+            {flagged && (
               <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
                 <Thermometer className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
@@ -244,7 +236,7 @@ const handleDelete = () => {
                   </p>
                 </div>
               </li>
-              {log.incident && log.incident !== "No issues to report" && (
+              {flagged && (
                 <li className="flex gap-3">
                   <span className="mt-1.5 h-2 w-2 rounded-full bg-amber-500" />
                   <div>
@@ -269,58 +261,5 @@ const handleDelete = () => {
         onCancel={() => setConfirmDelete(false)}
       />
     </>
-  );
-}
-
-
-function Metric({
-  icon,
-  label,
-  value,
-  sub,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  sub: string;
-}) {
-  return (
-    <div className="card p-4 sm:p-5">
-      <p className="flex items-center gap-2 text-xs text-slate-500">
-        {icon}
-        {label}
-      </p>
-      <p className="mt-2 font-display text-2xl font-semibold">{value}</p>
-      <p className="mt-1 font-mono text-xs text-slate-500">{sub}</p>
-    </div>
-  );
-}
-
-function Panel({
-  icon,
-  title,
-  children,
-}: {
-  icon: ReactNode;
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="card p-4 sm:p-6">
-      <h3 className="mb-4 flex items-center gap-2 font-display font-semibold">
-        {icon}
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex justify-between gap-4 py-2 text-sm">
-      <span className="text-slate-500">{k}</span>
-      <span className="text-right font-medium">{v}</span>
-    </div>
   );
 }

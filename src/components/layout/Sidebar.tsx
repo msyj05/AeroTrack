@@ -9,9 +9,9 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import Logo from "./Logo";
-import { currentUser } from "../data/mock";
-import { useData } from "../data/DataContext";
+import Logo from "../ui/Logo";
+import { currentUser } from "../../data/mock";
+import { useData } from "../../data/DataContext";
 import { useSidebar } from "./SidebarContext";
 
 export default function Sidebar() {

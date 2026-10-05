@@ -22,7 +22,6 @@ export interface FlightLog {
   finalPct?: number;
   initialTemp?: number;
   finalTemp?: number;
-  maxAltitude?: number;
   notes?: string;
   incident?: string;
 }
@@ -54,4 +53,26 @@ export interface User {
   email: string
   phone: string
   license: string
+}
+
+/** Raw string values held by the add flight log form */
+export interface FlightFormState {
+  date: string
+  location: string
+  reporting: string
+  leaving: string
+  start: string
+  end: string
+  purpose: string
+  drone: string
+  pilot: string
+  type: string
+  batterySerial: string
+  cycles: string
+  initialPct: string
+  finalPct: string
+  initialTemp: string
+  finalTemp: string
+  notes: string
+  incident: string
 }

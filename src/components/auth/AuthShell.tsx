@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import DroneMark from "./DroneMark";
+import DroneMark from "../ui/DroneMark";
 
 /** Split layout used by Login and SignUp. Drop your hero photo at public/auth-bg.jpg */
 export default function AuthShell({ children }: { children: ReactNode }) {

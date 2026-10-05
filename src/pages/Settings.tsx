@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ChevronDown, ShieldCheck } from 'lucide-react'
-import Topbar from '../components/Topbar'
+import Topbar from '../components/layout/Topbar'
 import { currentUser } from '../data/mock'
 
 export default function Settings() {

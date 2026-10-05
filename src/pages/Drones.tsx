@@ -1,18 +1,33 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, Command, Plus, Search } from 'lucide-react'
-import Topbar from '../components/Topbar'
-import StatusBadge from '../components/StatusBadge'
+import { ChevronDown, Command, Plus, Search, Trash2 } from 'lucide-react'
+import Topbar from '../components/layout/Topbar'
+import StatusBadge from '../components/ui/StatusBadge'
 import { useData } from "../data/DataContext";
+import AddDroneDialog from "../components/drones/AddDroneDialog";
+import type { Drone, DroneStatus } from "../types";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 
 export default function Drones() {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('All statuses')
+  const [addOpen, setAddOpen] = useState(false);
 
-  const { drones } = useData()
+  const { drones, updateDrone, deleteDrone } = useData();
+  const [pendingDelete, setPendingDelete] = useState<Drone | null>(null);
   const list = drones.filter(
     (d) => d.name.toLowerCase().includes(query.toLowerCase()) && (status === 'All statuses' || d.status === status),
   )
+  const toggleStatus = (drone: Drone) => {
+  const nextStatus: DroneStatus =
+    drone.status === "Ready" ? "In Maintenance" : "Ready";
+  updateDrone(drone.id, { status: nextStatus });
+}
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    deleteDrone(pendingDelete.id);
+    setPendingDelete(null);
+  };
 
   return (
     <>
@@ -46,6 +61,7 @@ export default function Drones() {
             </label>
 
             <button
+              onClick={() => setAddOpen(true)}
               className="btn-primary shrink-0 sm:ml-auto"
               aria-label="Add drone"
             >
@@ -80,8 +96,20 @@ export default function Drones() {
                 <Link to="/flight-logs" className="btn-outline">
                   View logs
                 </Link>
-                <button className="btn-dark">Schedule check</button>
+                <button
+                  onClick={() => toggleStatus(d)}
+                  className={d.status === "Ready" ? "btn-dark" : "btn-primary"}
+                >
+                  {d.status === "Ready" ? "Send to maintenance" : "Mark ready"}
+                </button>
               </div>
+              <button
+                onClick={() => setPendingDelete(d)}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete drone
+              </button>
             </article>
           ))}
         </div>
@@ -92,6 +120,18 @@ export default function Drones() {
           </p>
         )}
       </div>
+      <AddDroneDialog open={addOpen} onClose={() => setAddOpen(false)} />
+        
+      <ConfirmDialog
+  open={pendingDelete !== null}
+  title={pendingDelete ? `Delete ${pendingDelete.name}?` : ""}
+  description="This drone will be removed from your fleet. This cannot be undone."
+  confirmLabel="Delete"
+  cancelLabel="Keep"
+  tone="danger"
+  onConfirm={confirmDelete}
+  onCancel={() => setPendingDelete(null)}
+/>
     </>
   );
 }
