@@ -12,6 +12,7 @@ import {
 import StatusBadge from "../components/ui/StatusBadge";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import DroneDialog from "../components/drones/DroneDialog";
+import { toast } from "sonner";
 import { useData } from "../data/DataContext";
 import type { DroneStatus } from "../types";
 
@@ -43,6 +44,7 @@ export default function DroneDetails() {
   const handleDelete = () => {
     deleteDrone(drone.id);
     setConfirmDelete(false);
+    toast.success("Drone deleted.");
     navigate("/drones");
   };
 
@@ -50,6 +52,9 @@ export default function DroneDetails() {
     const nextStatus: DroneStatus =
       drone.status === "Ready" ? "In Maintenance" : "Ready";
     updateDrone(drone.id, { status: nextStatus });
+    toast.success(
+      nextStatus === "Ready" ? "Marked as ready." : "Sent to maintenance.",
+    );
   };
 
   return (

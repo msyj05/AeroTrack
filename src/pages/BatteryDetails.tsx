@@ -13,6 +13,7 @@ import StatusBadge from "../components/ui/StatusBadge";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import AddBatteryDialog from "../components/batteries/AddBatteryDialog";
 import { useData } from "../data/DataContext";
+import { toast } from "sonner";
 
 const barColor = (health: number) =>
   health >= 80 ? "bg-emerald-600" : health >= 65 ? "bg-brand" : "bg-red-600";
@@ -45,6 +46,7 @@ export default function BatteryDetails() {
   const handleDelete = () => {
     deleteBattery(battery.serial);
     setConfirmDelete(false);
+    toast.success("Battery deleted.");
     navigate("/batteries");
   };
 

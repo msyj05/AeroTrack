@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import { useData } from "../../data/DataContext";
+import { toast } from "sonner";
 import type { Drone, DroneStatus } from "../../types";
 import Modal from "../ui/Modal";
 
@@ -115,6 +116,7 @@ export default function DroneDialog({ open, onClose, initialDrone }: Props) {
         airTimeHours: hoursNum,
         lastFlight: formatLastFlight(lastFlight),
       });
+      toast.success("Drone updated.");
     } else {
       const highest = drones.reduce((max, d) => {
         const n = Number(d.id.replace("d", ""));
@@ -130,7 +132,7 @@ export default function DroneDialog({ open, onClose, initialDrone }: Props) {
         airTimeHours: hoursNum,
         lastFlight: formatLastFlight(lastFlight),
       };
-
+      toast.success("Drone added.");
       addDrone(newDrone);
     }
 

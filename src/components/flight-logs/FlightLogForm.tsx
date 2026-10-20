@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, CheckCircle2, Timer } from "lucide-react";
 import { currentUser } from "../../data/mock";
+import { toast } from "sonner";
 import { useData } from "../../data/DataContext";
 import type { FlightFormState, FlightLog } from "../../types";
 import type { FlightFormChange } from "./FormParts";
@@ -160,6 +161,7 @@ export default function FlightLogForm({ initialLog }: Props) {
         notes: f.notes || undefined,
         incident: f.incident || undefined,
       });
+      toast.success("Flight log updated.");
       navigate(`/flight-logs/${initialLog.id}`);
     } else {
       // Next FL-XXXX from existing logs
@@ -192,6 +194,7 @@ export default function FlightLogForm({ initialLog }: Props) {
       };
 
       addFlightLog(newLog);
+      toast.success("Flight log saved.");
       navigate("/flight-logs");
     }
   };

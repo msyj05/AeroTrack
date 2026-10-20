@@ -14,3 +14,10 @@
   .btn-dark { @apply btn bg-ink text-white hover:bg-navy-light; }
   .btn-outline { @apply btn border border-slate-200 bg-white text-ink hover:bg-slate-50; }
 }
+
+@media (max-width: 600px) {
+  [data-sonner-toaster] [data-sonner-toast] {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

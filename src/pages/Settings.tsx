@@ -1,12 +1,12 @@
 import {
   useRef,
   useState,
-  useEffect,
   type FormEvent,
   type ChangeEvent,
 } from "react";
 import Topbar from "../components/layout/Topbar";
 import { useData } from "../data/DataContext";
+import { toast } from "sonner";
 
 export default function Settings() {
   const { user, updateUser } = useData();
@@ -17,34 +17,25 @@ export default function Settings() {
     phone: user.phone,
   });
   const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
-  const [msg, setMsg] = useState("");
 
   const meetsPolicy = pw.next.length >= 10;
   const mismatch = pw.confirm !== "" && pw.next !== pw.confirm;
   const missingCurrent = pw.current === "" && pw.next !== "";
 
-  // Auto-dismiss the success message after 3 seconds
-  useEffect(() => {
-    if (!msg) return;
-    const timer = setTimeout(() => setMsg(""), 3000);
-    return () => clearTimeout(timer);
-  }, [msg]);
-
   const saveProfile = (e: FormEvent) => {
-    e.preventDefault();
-    updateUser({ name: profile.name, phone: profile.phone });
-    setMsg("Profile saved.");
-  };
+  e.preventDefault();
+  updateUser({ name: profile.name, phone: profile.phone });
+  toast.success("Profile saved.");
+};
 
   const savePassword = (e: FormEvent) => {
     e.preventDefault();
-    if (!pw.current) {
-      setMsg("Enter your current password.");
-      return;
-    }
-    if (!meetsPolicy || mismatch) return;
+    if (!pw.current) return toast.error("Enter your current password.");
+    if (!meetsPolicy)
+      return toast.error("Password must be at least 10 characters.");
+    if (mismatch) return toast.error("Passwords do not match.");
     setPw({ current: "", next: "", confirm: "" });
-    setMsg("Password updated.");
+    toast.success("Password updated.");
   };
 
   const handlePhoto = (e: ChangeEvent<HTMLInputElement>) => {
@@ -73,12 +64,7 @@ export default function Settings() {
     <>
       <Topbar title="Profile / Settings" />
       <div className="max-w-3xl space-y-6 p-4 sm:p-8">
-        {msg && (
-          <p className="rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
-            {msg}
-          </p>
-        )}
-
+        
         <form onSubmit={saveProfile} className="card p-6">
           <h2 className="font-display text-lg font-semibold">
             Profile information
