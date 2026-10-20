@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Command,
+  Download,
   Plane,
   Plus,
   Search,
@@ -15,6 +16,7 @@ import {
 import Topbar from "../components/layout/Topbar";
 import StatusBadge from "../components/ui/StatusBadge";
 import { useData } from "../data/DataContext";
+import { downloadFlightLogsCsv } from "../utils/exportCsv";
 import EmptyState from "../components/ui/EmptyState";
 
 type Filter = "All" | "Incident" | "Review";
@@ -123,15 +125,30 @@ export default function FlightLogs() {
                 />
               </div>
 
-              {/* Add button — full width below filters until md, then inline right */}
-              <Link
-                to="/flight-logs/new"
-                className="btn-primary w-full md:w-auto"
-                aria-label="Add flight log"
-              >
-                <Plus className="h-4 w-4" />
-                Add Flight Log
-              </Link>
+              <div className="flex w-full gap-2 md:w-auto">
+                <button
+                  onClick={() => {
+                    const today = new Date().toISOString().split("T")[0];
+                    downloadFlightLogsCsv(rows, `flight-logs-${today}.csv`);
+                  }}
+                  disabled={rows.length === 0}
+                  className="btn-outline flex-1 md:flex-none disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Export to CSV"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Export CSV</span>
+                  <span className="sm:hidden">Export</span>
+                </button>
+                <Link
+                  to="/flight-logs/new"
+                  className="btn-primary flex-1 md:flex-none"
+                  aria-label="Add flight log"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add Flight Log</span>
+                  <span className="sm:hidden">Add</span>
+                </Link>
+              </div>
             </div>
           </div>
 
