@@ -12,6 +12,7 @@ import Topbar from "../components/layout/Topbar";
 import StatusBadge from "../components/ui/StatusBadge";
 import { useData } from "../data/DataContext";
 import AddBatteryDialog from "../components/batteries/AddBatteryDialog";
+import EmptyState from "../components/ui/EmptyState";
 
 const barColor = (health: number) =>
   health >= 80 ? "bg-emerald-600" : health >= 65 ? "bg-brand" : "bg-red-600";
@@ -40,16 +41,25 @@ export default function Batteries() {
               <BatteryCharging className="h-4 w-4 text-brand sm:h-5 sm:w-5" />
             }
             label="Avg Health"
-            value={`${Math.round(batteries.reduce((s, b) => s + b.health, 0) / batteries.length)}%`}
+            value={
+              batteries.length > 0
+                ? `${Math.round(batteries.reduce((s, b) => s + b.health, 0) / batteries.length)}%`
+                : "—"
+            }
           />
           <Summary
             icon={<RefreshCw className="h-4 w-4 text-brand sm:h-5 sm:w-5" />}
             label="Avg Cycles"
-            value={String(
-              Math.round(
-                batteries.reduce((s, b) => s + b.cycles, 0) / batteries.length,
-              ),
-            )}
+            value={
+              batteries.length > 0
+                ? String(
+                    Math.round(
+                      batteries.reduce((s, b) => s + b.cycles, 0) /
+                        batteries.length,
+                    ),
+                  )
+                : "—"
+            }
           />
           <Summary
             icon={
@@ -67,138 +77,100 @@ export default function Batteries() {
         <div className="card">
           {/* Filters */}
           <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:p-5">
-            <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 sm:w-72">
-              <Search className="h-4 w-4 shrink-0 text-slate-400" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search serial or model..."
-                className="w-full min-w-0 bg-transparent text-sm outline-none"
-              />
-            </label>
+  {/* Search — full width on mobile, fixed width on desktop */}
+  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 sm:w-72 sm:shrink-0">
+    <Search className="h-4 w-4 shrink-0 text-slate-400" />
+    <input
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+      placeholder="Search serial or model..."
+      className="w-full min-w-0 bg-transparent text-sm outline-none"
+    />
+  </label>
 
-            <div className="flex items-center gap-3">
-              <label className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm sm:flex-none">
-                <select
-                  value={condition}
-                  onChange={(e) => setCondition(e.target.value)}
-                  className="w-full appearance-none bg-transparent pr-6 outline-none"
-                >
-                  {[
-                    "All conditions",
-                    "Excellent",
-                    "Good",
-                    "Monitor",
-                    "Degraded",
-                  ].map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4" />
-              </label>
+  {/* Filter + Add — filter grows on mobile, fits content on desktop */}
+  <div className="flex items-center gap-3 sm:flex-1">
+    <label className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm sm:max-w-48">
+      <select
+        value={condition}
+        onChange={(e) => setCondition(e.target.value)}
+        className="w-full appearance-none bg-transparent pr-6 outline-none"
+      >
+        {[
+          "All conditions",
+          "Excellent",
+          "Good",
+          "Monitor",
+          "Degraded",
+        ].map((c) => (
+          <option key={c}>{c}</option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4" />
+    </label>
 
-              <button
-                onClick={() => setAddOpen(true)}
-                className="btn-primary shrink-0 sm:ml-auto"
-                aria-label="Add battery"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Battery</span>
-                <span className="sm:hidden">Battery</span>
-              </button>
+    <button
+      onClick={() => setAddOpen(true)}
+      className="btn-primary shrink-0 sm:ml-auto"
+      aria-label="Add battery"
+    >
+      <Plus className="h-4 w-4" />
+      <span className="hidden sm:inline">Add Battery</span>
+      <span className="sm:hidden">Battery</span>
+    </button>
+  </div>
+</div>
+
+          {rows.length === 0 ? (
+            <div className="border-t border-slate-100">
+              {batteries.length === 0 ? (
+                <EmptyState
+                  icon={BatteryCharging}
+                  title="No batteries yet"
+                  description="Register your first battery pack to start tracking cycles and health."
+                  action={
+                    <button
+                      onClick={() => setAddOpen(true)}
+                      className="btn-primary"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Battery
+                    </button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No batteries match"
+                  description="Try a different search term or clear the condition filter."
+                  compact
+                />
+              )}
             </div>
-          </div>
-
-          {/* Mobile: card list */}
-          <ul className="divide-y divide-slate-100 border-t border-slate-100 md:hidden">
-            {rows.map((b) => (
-              <li key={b.serial}>
-                <Link
-                  to={`/batteries/${b.serial}`}
-                  className="block px-4 py-4 transition active:bg-slate-50"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-mono font-medium">{b.serial}</p>
-                      <p className="mt-0.5 truncate text-sm text-slate-500">
-                        {b.model}
-                      </p>
-                    </div>
-                    <StatusBadge label={b.condition} />
-                  </div>
-
-                  <div className="mt-3">
-                    <div className="mb-1 flex justify-between font-mono text-xs text-slate-500">
-                      <span>{b.cycles} cycles</span>
-                      <span>{b.health}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-slate-100">
-                      <div
-                        className={`h-1.5 rounded-full ${barColor(b.health)}`}
-                        style={{ width: `${b.health}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                    <span>
-                      Last used:{" "}
-                      <span className="font-medium text-ink">{b.lastUsed}</span>
-                    </span>
-                    <span>
-                      Flights:{" "}
-                      <span className="font-medium text-ink">{b.flights}</span>
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-            {rows.length === 0 && (
-              <li className="px-4 py-10 text-center text-slate-500">
-                No batteries match. Clear the search or condition filter.
-              </li>
-            )}
-          </ul>
-
-          {/* Desktop: table */}
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full text-left text-sm">
-              <thead className="border-y border-slate-100 bg-slate-50/60 text-xs uppercase text-slate-500">
-                <tr>
-                  {[
-                    "Serial",
-                    "Model",
-                    "Cycles / Health",
-                    "Condition",
-                    "Last used",
-                  ].map((h) => (
-                    <th key={h} className="px-5 py-3 font-medium">
-                      {h}
-                    </th>
-                  ))}
-                  <th className="px-5 py-3 text-right font-medium">Flights</th>
-                </tr>
-              </thead>
-              <tbody>
+          ) : (
+            <>
+              {/* Mobile: card list */}
+              <ul className="divide-y divide-slate-100 border-t border-slate-100 md:hidden">
                 {rows.map((b) => (
-                  <tr
-                    key={b.serial}
-                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60"
-                  >
-                    <td className="px-5 py-4 font-mono font-medium">
-                      <Link
-                        to={`/batteries/${b.serial}`}
-                        className="hover:text-brand"
-                      >
-                        {b.serial}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-4 text-slate-500">{b.model}</td>
-                    <td className="px-5 py-4">
-                      <div className="w-40">
-                        <div className="mb-1 flex justify-between font-mono text-xs">
+                  <li key={b.serial}>
+                    <Link
+                      to={`/batteries/${b.serial}`}
+                      className="block px-4 py-4 transition active:bg-slate-50"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-mono font-medium">{b.serial}</p>
+                          <p className="mt-0.5 truncate text-sm text-slate-500">
+                            {b.model}
+                          </p>
+                        </div>
+                        <StatusBadge label={b.condition} />
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="mb-1 flex justify-between font-mono text-xs text-slate-500">
                           <span>{b.cycles} cycles</span>
-                          <span className="text-slate-500">{b.health}%</span>
+                          <span>{b.health}%</span>
                         </div>
                         <div className="h-1.5 rounded-full bg-slate-100">
                           <div
@@ -207,29 +179,110 @@ export default function Batteries() {
                           />
                         </div>
                       </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <StatusBadge label={b.condition} />
-                    </td>
-                    <td className="px-5 py-4 text-slate-500">{b.lastUsed}</td>
-                    <td className="px-5 py-4 text-right font-medium">
-                      {b.flights}
-                    </td>
-                  </tr>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                        <span>
+                          Last used:{" "}
+                          <span className="font-medium text-ink">
+                            {b.lastUsed}
+                          </span>
+                        </span>
+                        <span>
+                          Flights:{" "}
+                          <span className="font-medium text-ink">
+                            {b.flights}
+                          </span>
+                        </span>
+                      </div>
+                    </Link>
+                  </li>
                 ))}
                 {rows.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-5 py-10 text-center text-slate-500"
-                    >
-                      No batteries match. Clear the search or condition filter.
-                    </td>
-                  </tr>
+                  <li className="px-4 py-10 text-center text-slate-500">
+                    No batteries match. Clear the search or condition filter.
+                  </li>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </ul>
+
+              {/* Desktop: table */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-y border-slate-100 bg-slate-50/60 text-xs uppercase text-slate-500">
+                    <tr>
+                      {[
+                        "Serial",
+                        "Model",
+                        "Cycles / Health",
+                        "Condition",
+                        "Last used",
+                      ].map((h) => (
+                        <th key={h} className="px-5 py-3 font-medium">
+                          {h}
+                        </th>
+                      ))}
+                      <th className="px-5 py-3 text-right font-medium">
+                        Flights
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((b) => (
+                      <tr
+                        key={b.serial}
+                        className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60"
+                      >
+                        <td className="px-5 py-4 font-mono font-medium">
+                          <Link
+                            to={`/batteries/${b.serial}`}
+                            className="hover:text-brand"
+                          >
+                            {b.serial}
+                          </Link>
+                        </td>
+                        <td className="px-5 py-4 text-slate-500">{b.model}</td>
+                        <td className="px-5 py-4">
+                          <div className="w-40">
+                            <div className="mb-1 flex justify-between font-mono text-xs">
+                              <span>{b.cycles} cycles</span>
+                              <span className="text-slate-500">
+                                {b.health}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-slate-100">
+                              <div
+                                className={`h-1.5 rounded-full ${barColor(b.health)}`}
+                                style={{ width: `${b.health}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <StatusBadge label={b.condition} />
+                        </td>
+                        <td className="px-5 py-4 text-slate-500">
+                          {b.lastUsed}
+                        </td>
+                        <td className="px-5 py-4 text-right font-medium">
+                          {b.flights}
+                        </td>
+                      </tr>
+                    ))}
+                    {rows.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-5 py-10 text-center text-slate-500"
+                        >
+                          No batteries match. Clear the search or condition
+                          filter.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

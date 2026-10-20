@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Command,
+  Plane,
   Plus,
   Search,
   User,
@@ -14,9 +15,10 @@ import {
 import Topbar from "../components/layout/Topbar";
 import StatusBadge from "../components/ui/StatusBadge";
 import { useData } from "../data/DataContext";
-import type { FlightStatus } from "../types";
+import EmptyState from "../components/ui/EmptyState";
 
 type Filter = "All" | "Incident" | "Review";
+type Range = "all" | "7d" | "30d" | "90d";
 
 export default function FlightLogs() {
   const [query, setQuery] = useState("");
@@ -24,6 +26,7 @@ export default function FlightLogs() {
   const [drone, setDrone] = useState("All drones");
   const [status, setStatus] = useState<Filter>("All");
   const { flightLogs, drones } = useData();
+  const [range, setRange] = useState<Range>("all");
 
   const pilots = useMemo(
     () => Array.from(new Set(flightLogs.map((f) => f.pilot))),
@@ -35,12 +38,22 @@ export default function FlightLogs() {
     const matchesQuery = [f.pilot, f.drone, f.location, f.id].some((v) =>
       v.toLowerCase().includes(q),
     );
-    return (
-      matchesQuery &&
-      (pilot === "All pilots" || f.pilot === pilot) &&
-      (drone === "All drones" || f.drone === drone) &&
-      (status === "All" || f.status === (status as FlightStatus))
-    );
+
+    if (!matchesQuery) return false;
+    if (pilot !== "All pilots" && f.pilot !== pilot) return false;
+    if (drone !== "All drones" && f.drone !== drone) return false;
+    if (status !== "All" && f.status !== status) return false;
+
+    if (range !== "all") {
+      const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      cutoff.setHours(0, 0, 0, 0);
+      const logDate = new Date(f.date);
+      if (Number.isNaN(logDate.getTime()) || logDate < cutoff) return false;
+    }
+
+    return true;
   });
 
   const chip = (value: Filter, label: string) => (
@@ -76,34 +89,48 @@ export default function FlightLogs() {
             </label>
 
             {/* Filter row: date + pilots + drones + add button */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="btn-outline pointer-events-none hidden sm:flex">
-                <Calendar className="h-4 w-4" />
-                Sep 1 – Sep 26
-                <ChevronDown className="h-4 w-4" />
+            <div className="flex flex-col gap-2 md:flex-row md:items-center">
+              {/* Filters — 3-col grid at all widths */}
+              <div className="grid grid-cols-3 gap-2 md:flex-1">
+                <label className="relative flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 text-sm sm:px-3">
+                  <Calendar className="hidden h-4 w-4 shrink-0 text-slate-500 sm:block" />
+                  <select
+                    value={range}
+                    onChange={(e) => setRange(e.target.value as Range)}
+                    className="w-full appearance-none bg-transparent pr-5 text-xs outline-none sm:text-sm"
+                  >
+                    <option value="all">All time</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 h-4 w-4 sm:right-3" />
+                </label>
+
+                <Select
+                  icon={<User className="h-4 w-4" />}
+                  value={pilot}
+                  onChange={setPilot}
+                  options={["All pilots", ...pilots]}
+                  compact
+                />
+                <Select
+                  icon={<Command className="h-4 w-4" />}
+                  value={drone}
+                  onChange={setDrone}
+                  options={["All drones", ...drones.map((d) => d.name)]}
+                  compact
+                />
               </div>
 
-              <Select
-                icon={<User className="h-4 w-4" />}
-                value={pilot}
-                onChange={setPilot}
-                options={["All pilots", ...pilots]}
-              />
-              <Select
-                icon={<Command className="h-4 w-4" />}
-                value={drone}
-                onChange={setDrone}
-                options={["All drones", ...drones.map((d) => d.name)]}
-              />
-
+              {/* Add button — full width below filters until md, then inline right */}
               <Link
                 to="/flight-logs/new"
-                className="btn-primary sm:ml-auto"
+                className="btn-primary w-full md:w-auto"
                 aria-label="Add flight log"
               >
                 <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Flight Log</span>
-                <span className="sm:hidden">Log</span>
+                Add Flight Log
               </Link>
             </div>
           </div>
@@ -118,136 +145,177 @@ export default function FlightLogs() {
             </span>
           </div>
 
-          {/* Mobile: card list */}
-          <ul className="divide-y divide-slate-100 border-t border-slate-100 md:hidden">
-            {rows.map((f) => (
-              <li key={f.id}>
-                <Link
-                  to={`/flight-logs/${f.id}`}
-                  className="block px-4 py-4 active:bg-slate-50"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold">{f.id}</p>
-                      <p className="mt-0.5 truncate text-sm text-slate-500">
-                        {f.location}
-                      </p>
-                    </div>
-                    <StatusBadge label={f.status} />
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                    <Meta k="Date" v={f.date} />
-                    <Meta k="Duration" v={`${f.durationMin}m`} />
-                    <Meta k="Pilot" v={f.pilot} />
-                    <Meta k="Battery" v={f.battery} />
-                    <div className="col-span-2">
-                      <Meta k="Drone" v={f.drone} />
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-            {rows.length === 0 && (
-              <li className="px-4 py-10 text-center text-slate-500">
-                No flight logs match these filters.
-              </li>
-            )}
-          </ul>
-
-          {/* Desktop: table */}
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full text-left text-sm">
-              <thead className="border-y border-slate-100 bg-slate-50/60 text-xs uppercase text-slate-500">
-                <tr>
-                  {[
-                    "Date",
-                    "Pilot",
-                    "Drone",
-                    "Location",
-                    "Start",
-                    "End",
-                    "Dur.",
-                    "Battery",
-                  ].map((h) => (
-                    <th key={h} className="px-5 py-3 font-medium">
-                      {h}
-                    </th>
-                  ))}
-                  <th className="px-5 py-3 text-right font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
+          {rows.length === 0 ? (
+            <div className="border-t border-slate-100">
+              {flightLogs.length === 0 ? (
+                <EmptyState
+                  icon={Plane}
+                  title="No flight logs yet"
+                  description="Record your first flight to start building your logbook."
+                  action={
+                    <Link to="/flight-logs/new" className="btn-primary">
+                      <Plus className="h-4 w-4" />
+                      Add Flight Log
+                    </Link>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  icon={Search}
+                  title="No flight logs match"
+                  description="Try adjusting your search or clearing the filters."
+                  compact
+                />
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Mobile: card list */}
+              <ul className="divide-y divide-slate-100 border-t border-slate-100 md:hidden">
                 {rows.map((f) => (
-                  <tr
-                    key={f.id}
-                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60"
-                  >
-                    <td className="px-5 py-3.5">
-                      <Link
-                        to={`/flight-logs/${f.id}`}
-                        className="block font-medium hover:text-brand"
-                      >
-                        {f.date}
-                      </Link>
-                      <span className="text-xs text-slate-400">{f.id}</span>
-                    </td>
-                    <td className="px-5 py-3.5 font-medium">{f.pilot}</td>
-                    <td className="px-5 py-3.5 text-slate-500">{f.drone}</td>
-                    <td className="px-5 py-3.5 text-slate-500">{f.location}</td>
-                    <td className="px-5 py-3.5 font-mono text-xs">{f.start}</td>
-                    <td className="px-5 py-3.5 font-mono text-xs">{f.end}</td>
-                    <td className="px-5 py-3.5 font-medium">
-                      {f.durationMin}m
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-500">{f.battery}</td>
-                    <td className="px-5 py-3.5 text-right">
-                      <StatusBadge label={f.status} />
-                    </td>
-                  </tr>
+                  <li key={f.id}>
+                    <Link
+                      to={`/flight-logs/${f.id}`}
+                      className="block px-4 py-4 active:bg-slate-50"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold">{f.id}</p>
+                          <p className="mt-0.5 truncate text-sm text-slate-500">
+                            {f.location}
+                          </p>
+                        </div>
+                        <StatusBadge label={f.status} />
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                        <Meta k="Date" v={f.date} />
+                        <Meta k="Duration" v={`${f.durationMin}m`} />
+                        <Meta k="Pilot" v={f.pilot} />
+                        <Meta k="Battery" v={f.battery} />
+                        <div className="col-span-2">
+                          <Meta k="Drone" v={f.drone} />
+                        </div>
+                      </div>
+                    </Link>
+                  </li>
                 ))}
                 {rows.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className="px-5 py-10 text-center text-slate-500"
-                    >
-                      No flight logs match these filters. Clear a filter to see
-                      more.
-                    </td>
-                  </tr>
+                  <li className="px-4 py-10 text-center text-slate-500">
+                    No flight logs match these filters.
+                  </li>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </ul>
+
+              {/* Desktop: table */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-y border-slate-100 bg-slate-50/60 text-xs uppercase text-slate-500">
+                    <tr>
+                      {[
+                        "Date",
+                        "Pilot",
+                        "Drone",
+                        "Location",
+                        "Start",
+                        "End",
+                        "Dur.",
+                        "Battery",
+                      ].map((h) => (
+                        <th key={h} className="px-5 py-3 font-medium">
+                          {h}
+                        </th>
+                      ))}
+                      <th className="px-5 py-3 text-right font-medium">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((f) => (
+                      <tr
+                        key={f.id}
+                        className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60"
+                      >
+                        <td className="px-5 py-3.5">
+                          <Link
+                            to={`/flight-logs/${f.id}`}
+                            className="block font-medium hover:text-brand"
+                          >
+                            {f.date}
+                          </Link>
+                          <span className="text-xs text-slate-400">{f.id}</span>
+                        </td>
+                        <td className="px-5 py-3.5 font-medium">{f.pilot}</td>
+                        <td className="px-5 py-3.5 text-slate-500">
+                          {f.drone}
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-500">
+                          {f.location}
+                        </td>
+                        <td className="px-5 py-3.5 font-mono text-xs">
+                          {f.start}
+                        </td>
+                        <td className="px-5 py-3.5 font-mono text-xs">
+                          {f.end}
+                        </td>
+                        <td className="px-5 py-3.5 font-medium">
+                          {f.durationMin}m
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-500">
+                          {f.battery}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <StatusBadge label={f.status} />
+                        </td>
+                      </tr>
+                    ))}
+                    {rows.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={9}
+                          className="px-5 py-10 text-center text-slate-500"
+                        >
+                          No flight logs match these filters. Clear a filter to
+                          see more.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           {/* Pagination */}
-          <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-            <span className="text-xs text-slate-500 sm:text-sm">
-              Showing 1–{rows.length} of {flightLogs.length} flight logs
-            </span>
-            <div className="flex items-center gap-2 text-sm">
-              <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button className="h-9 w-9 rounded-lg bg-ink text-white">
-                1
-              </button>
-              <button className="h-9 w-9 rounded-lg border border-slate-200">
-                2
-              </button>
-              <button className="h-9 w-9 rounded-lg border border-slate-200">
-                3
-              </button>
-              <span className="px-1 text-slate-400">...</span>
-              <button className="h-9 w-9 rounded-lg border border-slate-200">
-                36
-              </button>
-              <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200">
-                <ChevronRight className="h-4 w-4" />
-              </button>
+          {rows.length > 0 && (
+            <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <span className="text-xs text-slate-500 sm:text-sm">
+                Showing 1–{rows.length} of {flightLogs.length} flight logs
+              </span>
+              <div className="flex items-center gap-2 text-sm">
+                <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button className="h-9 w-9 rounded-lg bg-ink text-white">
+                  1
+                </button>
+                <button className="h-9 w-9 rounded-lg border border-slate-200">
+                  2
+                </button>
+                <button className="h-9 w-9 rounded-lg border border-slate-200">
+                  3
+                </button>
+                <span className="px-1 text-slate-400">...</span>
+                <button className="h-9 w-9 rounded-lg border border-slate-200">
+                  36
+                </button>
+                <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>
@@ -259,25 +327,37 @@ function Select({
   value,
   onChange,
   options,
+  compact = false,
 }: {
   icon: React.ReactNode;
   value: string;
   onChange: (v: string) => void;
   options: string[];
+  compact?: boolean;
 }) {
   return (
-    <label className="relative flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm">
-      {icon}
+    <label
+      className={`relative flex items-center gap-2 rounded-lg border border-slate-200 bg-white ${
+        compact ? "px-2.5 py-2.5 sm:px-3" : "px-3 py-2.5"
+      } text-sm`}
+    >
+      <span className={compact ? "hidden shrink-0 sm:block" : ""}>{icon}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none bg-transparent pr-5 outline-none"
+        className={`w-full min-w-0 appearance-none bg-transparent pr-5 outline-none ${
+          compact ? "truncate text-xs sm:text-sm" : ""
+        }`}
       >
         {options.map((o) => (
           <option key={o}>{o}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4" />
+      <ChevronDown
+        className={`pointer-events-none absolute h-4 w-4 ${
+          compact ? "right-2 sm:right-3" : "right-3"
+        }`}
+      />
     </label>
   );
 }

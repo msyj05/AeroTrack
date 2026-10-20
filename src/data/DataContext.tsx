@@ -6,9 +6,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Battery, Drone, FlightLog } from "../types";
+import type { Battery, Drone, FlightLog, User } from "../types";
 import {
   batteries as seedBatteries,
+  currentUser as seedUser,
   drones as seedDrones,
   flightLogs as seedFlightLogs,
 } from "./mock";
@@ -19,6 +20,8 @@ interface Store {
   flightLogs: FlightLog[];
   drones: Drone[];
   batteries: Battery[];
+  user: User;
+
 }
 
 interface DataCtx extends Store {
@@ -31,6 +34,7 @@ interface DataCtx extends Store {
   addBattery: (battery: Battery) => void;
   updateBattery: (serial: string, patch: Partial<Battery>) => void;
   deleteBattery: (serial: string) => void;
+  updateUser: (patch: Partial<User>) => void;
   reset: () => void;
 }
 
@@ -38,6 +42,7 @@ const seed: Store = {
   flightLogs: seedFlightLogs,
   drones: seedDrones,
   batteries: seedBatteries,
+  user: seedUser,
 };
 
 function loadStore(): Store {
@@ -54,7 +59,10 @@ function loadStore(): Store {
     ) {
       return seed;
     }
-    return parsed as Store;
+    return {
+      ...parsed,
+      user: parsed.user ?? seedUser,
+    } as Store;
   } catch {
     return seed;
   }
@@ -127,6 +135,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setStore((s) => ({ ...s, user: { ...s.user, ...patch } }));
+  }, []);
+
   const reset = useCallback(() => {
     setStore(seed);
   }, []);
@@ -145,6 +157,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         updateBattery,
         deleteBattery,
         reset,
+        updateUser,
       }}
     >
       {children}

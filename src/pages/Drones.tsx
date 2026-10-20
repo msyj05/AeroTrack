@@ -5,6 +5,7 @@ import Topbar from "../components/layout/Topbar";
 import StatusBadge from "../components/ui/StatusBadge";
 import { useData } from "../data/DataContext";
 import DroneDialog from "../components/drones/DroneDialog";
+import EmptyState from "../components/ui/EmptyState";
 
 export default function Drones() {
   const [query, setQuery] = useState("");
@@ -24,7 +25,8 @@ export default function Drones() {
       <Topbar title="Drones" />
       <div className="space-y-5 p-4 sm:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 sm:w-64">
+          {/* Search — full width on mobile, fixed width on desktop */}
+          <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 sm:w-64 sm:shrink-0">
             <Search className="h-4 w-4 shrink-0 text-slate-400" />
             <input
               value={query}
@@ -34,8 +36,9 @@ export default function Drones() {
             />
           </label>
 
-          <div className="flex items-center gap-3">
-            <label className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm sm:flex-none">
+          {/* Filter + Add — filter grows on mobile, fits content on desktop */}
+          <div className="flex items-center gap-3 sm:flex-1">
+            <label className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm sm:max-w-48">
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
@@ -91,11 +94,34 @@ export default function Drones() {
           ))}
         </div>
 
-        {list.length === 0 && (
-          <p className="py-10 text-center text-slate-500">
-            No drones match. Clear the search or status filter.
-          </p>
-        )}
+        {list.length === 0 &&
+          (drones.length === 0 ? (
+            <div className="card">
+              <EmptyState
+                icon={Command}
+                title="No drones yet"
+                description="Add your first drone to start tracking flights, maintenance, and air time."
+                action={
+                  <button
+                    onClick={() => setAddOpen(true)}
+                    className="btn-primary"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Drone
+                  </button>
+                }
+              />
+            </div>
+          ) : (
+            <div className="card">
+              <EmptyState
+                icon={Search}
+                title="No drones match"
+                description="Try a different search term or clear the status filter."
+                compact
+              />
+            </div>
+          ))}
       </div>
 
       <DroneDialog open={addOpen} onClose={() => setAddOpen(false)} />

@@ -14,7 +14,7 @@ export default function SignUp() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (form.password.length < 12) return setError('Password must be at least 12 characters.')
+    if (form.password.length < 10) return setError('Password must be at least 10 characters.')
     if (form.password !== form.confirm) return setError('Passwords do not match.')
     setError('')
     navigate('/dashboard') // Mock only

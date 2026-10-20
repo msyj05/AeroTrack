@@ -27,22 +27,20 @@ function shortDate(days: number): string {
 // --- User -------------------------------------------------------------------
 
 export const currentUser: User = {
-  name: 'Maya Chen',
-  initials: 'MC',
-  role: 'Ops Pilot · Admin',
-  email: 'maya.chen@skyops.io',
-  phone: '+1 (415) 555-0132',
-  license: 'GVC-2291',
+  name: 'Michael Jnr',
+  initials: 'MJ',
+  email: 'michael.jnr@aerotack.io',
+  phone: '+233 24 123 4567',
 }
 
 // --- Flight logs ------------------------------------------------------------
 // Spread across the last 6 days, most recent first.
 
 export const flightLogs: FlightLog[] = [
-  { id: 'FL-2481', date: dayOffset(0), pilot: 'Maya Chen', drone: 'Mavic 3 Enterprise', location: 'Burma Camp Training Grounds', start: '09:12', end: '09:47', durationMin: 35, battery: 'BAT-014', status: 'Completed' },
+  { id: 'FL-2481', date: dayOffset(0), pilot: 'Michael Jnr', drone: 'Mavic 3 Enterprise', location: 'Burma Camp Training Grounds', start: '09:12', end: '09:47', durationMin: 35, battery: 'BAT-014', status: 'Completed' },
   { id: 'FL-2480', date: dayOffset(0), pilot: 'Jonas Weber', drone: 'Matrice 350 RTK', location: 'North Ridge Survey', start: '08:05', end: '08:52', durationMin: 47, battery: 'BAT-007', status: 'Completed' },
   { id: 'FL-2479', date: dayOffset(1), pilot: 'Amara Okafor', drone: 'Mini 4 Pro — Scout 2', location: 'Solar Farm Block C', start: '14:20', end: '14:44', durationMin: 24, battery: 'BAT-021', status: 'Completed' },
-  { id: 'FL-2478', date: dayOffset(1), pilot: 'Maya Chen', drone: 'Avata 2 — Indoor 1', location: 'Warehouse Interior', start: '11:02', end: '11:16', durationMin: 14, battery: 'BAT-003', status: 'Incident' },
+  { id: 'FL-2478', date: dayOffset(1), pilot: 'Michael Jnr', drone: 'Avata 2 — Indoor 1', location: 'Warehouse Interior', start: '11:02', end: '11:16', durationMin: 14, battery: 'BAT-003', status: 'Incident' },
   { id: 'FL-2477', date: dayOffset(2), pilot: 'Diego Ramos', drone: 'Mavic 3 Enterprise', location: 'Coastal Cliff Path', start: '16:40', end: '17:08', durationMin: 28, battery: 'BAT-014', status: 'Completed' },
   { id: 'FL-2476', date: dayOffset(2), pilot: 'Jonas Weber', drone: 'Matrice 350 RTK', location: 'Quarry East Wall', start: '10:15', end: '10:58', durationMin: 43, battery: 'BAT-009', status: 'Review' },
   { id: 'FL-2475', date: dayOffset(3), pilot: 'Amara Okafor', drone: 'Mini 4 Pro — Scout 2', location: 'Riverbend Bridge', start: '09:30', end: '09:51', durationMin: 21, battery: 'BAT-021', status: 'Completed' },

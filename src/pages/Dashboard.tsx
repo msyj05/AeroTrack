@@ -1,18 +1,23 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, BatteryCharging, Clock, Command, Plane } from 'lucide-react'
+import { ArrowRight, BatteryCharging, Clock, Command, Plane, Plus } from 'lucide-react'
 import Topbar from '../components/layout/Topbar'
 import StatCard from '../components/ui/StatCard'
 import StatusBadge from '../components/ui/StatusBadge'
-import { activityByDay } from '../data/mock'
 import { useData } from '../data/DataContext'
+import EmptyState from "../components/ui/EmptyState";
+import { computeActivityByDay } from "../utils/activity";
 
 export default function Dashboard() {
-  const [metric, setMetric] = useState<'flights' | 'hours'>('flights')
-  const values = activityByDay.map((d) => d[metric])
-  const max = Math.max(...values)
+ const [metric, setMetric] = useState<"flights" | "hours">("flights");
+ const { flightLogs, drones, batteries } = useData();
+ const activityByDay = computeActivityByDay(flightLogs);
+ 
 
-  const { flightLogs, drones, batteries } = useData()
+ const values = activityByDay.map((d) => d[metric]);
+ // Guard: Math.max of all zeros returns 0, which breaks division. Fall back to 1.
+ const max = Math.max(1, ...values);
+
   const readyDrones = drones.filter((d) => d.status === 'Ready').length
   const healthyPacks = batteries.filter((b) => b.condition === 'Good' || b.condition === 'Excellent').length
 
@@ -28,28 +33,36 @@ export default function Dashboard() {
             tone="blue"
             value={String(flightLogs.length)}
             label="Total Flights"
-            chip="+12"
           />
           <StatCard
             icon={Clock}
             tone="green"
-            value={`${drones.reduce((sum, d) => sum + d.airTimeHours, 0).toFixed(1)}h`}
+            value={`${(flightLogs.reduce((sum, f) => sum + f.durationMin, 0) / 60).toFixed(1)}h`}
             label="Total Flight Hours"
-            chip="+8.2h"
           />
           <StatCard
             icon={Command}
             tone="amber"
             value={String(drones.length)}
             label="Total Drones"
-            chip={`${drones.filter((d) => d.status === "In Maintenance").length} in maint.`}
+            chip={
+              drones.filter((d) => d.status === "In Maintenance").length > 0
+                ? `${drones.filter((d) => d.status === "In Maintenance").length} in maint.`
+                : undefined
+            }
           />
           <StatCard
             icon={BatteryCharging}
             tone="blue"
             value={String(batteries.length)}
             label="Total Batteries"
-            chip={`${batteries.filter((b) => b.condition === "Monitor" || b.condition === "Degraded").length} monitor`}
+            chip={
+              batteries.filter(
+                (b) => b.condition === "Monitor" || b.condition === "Degraded",
+              ).length > 0
+                ? `${batteries.filter((b) => b.condition === "Monitor" || b.condition === "Degraded").length} monitor`
+                : undefined
+            }
           />
         </section>
 
@@ -105,23 +118,26 @@ export default function Dashboard() {
             <p className="text-sm text-slate-500">Drones &amp; batteries</p>
 
             <div className="mt-5 space-y-4">
-              <Meter
-                label="Drones ready"
-                value={readyDrones}
-                total={drones.length}
-                color="bg-emerald-500"
-              />
-              <Meter
-                label="Batteries healthy"
-                value={healthyPacks}
-                total={batteries.length}
-                color="bg-brand"
-              />
-            </div>
-
-            <div className="mt-auto flex gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              BAT-009 hit 189 cycles, schedule retirement check.
+              {drones.length === 0 && batteries.length === 0 ? (
+                <p className="text-sm text-slate-500">
+                  Add drones and batteries to see fleet readiness.
+                </p>
+              ) : (
+                <>
+                  <Meter
+                    label="Drones ready"
+                    value={readyDrones}
+                    total={drones.length}
+                    color="bg-emerald-500"
+                  />
+                  <Meter
+                    label="Batteries healthy"
+                    value={healthyPacks}
+                    total={batteries.length}
+                    color="bg-brand"
+                  />
+                </>
+              )}
             </div>
           </div>
         </section>
@@ -139,90 +155,133 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* Mobile: card list */}
-          <ul className="divide-y divide-slate-100 border-t border-slate-100 md:hidden">
-            {flightLogs.slice(0, 5).map((f) => (
-              <li key={f.id}>
-                <Link
-                  to={`/flight-logs/${f.id}`}
-                  className="block px-5 py-4 active:bg-slate-50"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold">{f.id}</p>
-                      <p className="mt-0.5 truncate text-sm text-slate-500">
-                        {f.location}
-                      </p>
-                    </div>
-                    <StatusBadge label={f.status} />
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                    <span className="font-medium text-ink">{f.pilot}</span>
-                    <span className="truncate">{f.drone}</span>
-                    <span className="font-mono">{f.durationMin}m</span>
-                    <span className="font-mono">{f.battery}</span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          {/* Desktop: table */}
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full text-left text-sm">
-              <thead className="border-y border-slate-100 bg-slate-50/60 text-xs uppercase text-slate-500">
-                <tr>
-                  {[
-                    "Flight",
-                    "Pilot",
-                    "Drone",
-                    "Location",
-                    "Duration",
-                    "Battery",
-                  ].map((h) => (
-                    <th key={h} className="px-6 py-3 font-medium">
-                      {h}
-                    </th>
-                  ))}
-                  <th className="px-6 py-3 text-right font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
+          {flightLogs.length === 0 ? (
+            <div className="border-t border-slate-100">
+              <EmptyState
+                icon={Plane}
+                title="No flight logs yet"
+                description="Your recent flights will appear here."
+                compact
+                action={
+                  <Link to="/flight-logs/new" className="btn-primary">
+                    <Plus className="h-4 w-4" />
+                    Add Flight Log
+                  </Link>
+                }
+              />
+            </div>
+          ) : (
+            <>
+              {/* Mobile: card list */}
+              <ul className="divide-y divide-slate-100 border-t border-slate-100 md:hidden">
                 {flightLogs.slice(0, 5).map((f) => (
-                  <tr
-                    key={f.id}
-                    className="border-b border-slate-100 last:border-0"
-                  >
-                    <td className="px-6 py-3.5 font-semibold">{f.id}</td>
-                    <td className="px-6 py-3.5">{f.pilot}</td>
-                    <td className="px-6 py-3.5 text-slate-500">{f.drone}</td>
-                    <td className="px-6 py-3.5 text-slate-500">{f.location}</td>
-                    <td className="px-6 py-3.5">{f.durationMin}m</td>
-                    <td className="px-6 py-3.5 text-slate-500">{f.battery}</td>
-                    <td className="px-6 py-3.5 text-right">
-                      <StatusBadge label={f.status} />
-                    </td>
-                  </tr>
+                  <li key={f.id}>
+                    <Link
+                      to={`/flight-logs/${f.id}`}
+                      className="block px-5 py-4 active:bg-slate-50"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold">{f.id}</p>
+                          <p className="mt-0.5 truncate text-sm text-slate-500">
+                            {f.location}
+                          </p>
+                        </div>
+                        <StatusBadge label={f.status} />
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                        <span className="font-medium text-ink">{f.pilot}</span>
+                        <span className="truncate">{f.drone}</span>
+                        <span className="font-mono">{f.durationMin}m</span>
+                        <span className="font-mono">{f.battery}</span>
+                      </div>
+                    </Link>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </ul>
+
+              {/* Desktop: table */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-y border-slate-100 bg-slate-50/60 text-xs uppercase text-slate-500">
+                    <tr>
+                      {[
+                        "Flight",
+                        "Pilot",
+                        "Drone",
+                        "Location",
+                        "Duration",
+                        "Battery",
+                      ].map((h) => (
+                        <th key={h} className="px-6 py-3 font-medium">
+                          {h}
+                        </th>
+                      ))}
+                      <th className="px-6 py-3 text-right font-medium">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {flightLogs.slice(0, 5).map((f) => (
+                      <tr
+                        key={f.id}
+                        className="border-b border-slate-100 last:border-0"
+                      >
+                        <td className="px-6 py-3.5 font-semibold">{f.id}</td>
+                        <td className="px-6 py-3.5">{f.pilot}</td>
+                        <td className="px-6 py-3.5 text-slate-500">
+                          {f.drone}
+                        </td>
+                        <td className="px-6 py-3.5 text-slate-500">
+                          {f.location}
+                        </td>
+                        <td className="px-6 py-3.5">{f.durationMin}m</td>
+                        <td className="px-6 py-3.5 text-slate-500">
+                          {f.battery}
+                        </td>
+                        <td className="px-6 py-3.5 text-right">
+                          <StatusBadge label={f.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </section>
       </div>
     </>
   );
 }
 
-function Meter({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
+function Meter({
+  label,
+  value,
+  total,
+  color,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  color: string;
+}) {
+  const pct = total > 0 ? (value / total) * 100 : 0;
   return (
     <div>
       <div className="mb-1.5 flex justify-between text-sm">
         <span>{label}</span>
-        <span className="text-slate-500">{value} of {total}</span>
+        <span className="text-slate-500">
+          {value} of {total}
+        </span>
       </div>
       <div className="h-2 rounded-full bg-slate-100">
-        <div className={`h-2 rounded-full ${color}`} style={{ width: `${(value / total) * 100}%` }} />
+        <div
+          className={`h-2 rounded-full ${color}`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
-  )
+  );
 }

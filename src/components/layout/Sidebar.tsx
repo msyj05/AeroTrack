@@ -1,4 +1,3 @@
-
 import { NavLink } from "react-router-dom";
 import {
   BatteryCharging,
@@ -10,21 +9,26 @@ import {
   X,
 } from "lucide-react";
 import Logo from "../ui/Logo";
-import { currentUser } from "../../data/mock";
 import { useData } from "../../data/DataContext";
 import { useSidebar } from "./SidebarContext";
 
 export default function Sidebar() {
   const { open, setOpen, setConfirmLogout } = useSidebar();
-  const { flightLogs } = useData();   
+  const { flightLogs, user } = useData();
 
   const links = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/flight-logs", label: "Flight Logs", icon: Plane, badge: flightLogs.length },
-  { to: "/drones", label: "Drones", icon: Command },
-  { to: "/batteries", label: "Batteries", icon: BatteryCharging },
-  { to: "/settings", label: "Profile / Settings", icon: Settings },
-];
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    {
+      to: "/flight-logs",
+      label: "Flight Logs",
+      icon: Plane,
+      badge: flightLogs.length,
+    },
+    { to: "/drones", label: "Drones", icon: Command },
+    { to: "/batteries", label: "Batteries", icon: BatteryCharging },
+    { to: "/settings", label: "Profile / Settings", icon: Settings },
+  ];
+
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-40 flex h-dvh w-60 shrink-0 flex-col bg-navy px-3 py-5 transition-transform duration-200 ease-out
@@ -43,12 +47,19 @@ export default function Sidebar() {
       </div>
 
       <div className="mt-6 flex items-center gap-3 rounded-xl border border-navy-line bg-navy-light px-3 py-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-brand">
-          {currentUser.initials}
-        </div>
+        {user.photo ? (
+          <img
+            src={user.photo}
+            alt={user.name}
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-brand">
+            {user.initials}
+          </div>
+        )}
         <div className="leading-tight">
-          <p className="text-sm font-medium text-white">{currentUser.name}</p>
-          <p className="text-xs text-slate-400">{currentUser.role}</p>
+          <p className="text-sm font-medium text-white">{user.name}</p>
         </div>
       </div>
 

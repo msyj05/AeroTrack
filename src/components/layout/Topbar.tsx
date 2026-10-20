@@ -1,13 +1,11 @@
-import { Bell, Menu, Plus, Search } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Bell, Menu, Search } from 'lucide-react'
 import { useSidebar } from './SidebarContext'
 
 interface Props {
   title: string
-  hideAction?: boolean
 }
 
-export default function Topbar({ title, hideAction }: Props) {
+export default function Topbar({ title }: Props) {
   const { setOpen } = useSidebar()
 
   return (
@@ -44,13 +42,6 @@ export default function Topbar({ title, hideAction }: Props) {
           <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand" />
         </button>
 
-        {!hideAction && (
-          <Link to="/flight-logs/new" className="btn-primary">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Flight Log</span>
-            <span className="sm:hidden">Log</span>
-          </Link>
-        )}
       </div>
     </header>
   );

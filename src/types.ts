@@ -13,7 +13,6 @@ export interface FlightLog {
   durationMin: number;
   battery: string;
   status: FlightStatus;
-  // new fields
   reporting?: string;
   leaving?: string;
   purpose?: string;
@@ -49,10 +48,9 @@ export interface Battery {
 export interface User {
   name: string
   initials: string
-  role: string
   email: string
   phone: string
-  license: string
+  photo?: string //base64 data URL
 }
 
 /** Raw string values held by the add flight log form */
