@@ -2,10 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail } from 'lucide-react'
 import AuthShell from '../components/auth/AuthShell'
+import { useAuth } from "../data/AuthContext";
 import { toast } from "sonner";
 
 export default function SignUp() {
   const navigate = useNavigate()
+  const { login } = useAuth();
+
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
   const [show, setShow] = useState(false)
   const [error, setError] = useState('')
@@ -19,8 +22,9 @@ export default function SignUp() {
     if (form.password !== form.confirm) return setError('Passwords do not match.')
     
     setError('')
+    login();
     toast.success("Account created successfully.");
-    navigate('/login') // Mock only
+    navigate('/login')
   }
 
   const Eyeball = (

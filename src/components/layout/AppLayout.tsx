@@ -3,14 +3,17 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import { SidebarContext } from "./SidebarContext";
+import { useAuth } from "../../data/AuthContext";
 import { toast } from "sonner";
 
 export default function AppLayout() {
-  const [open, setOpen] = useState(false);
-  const [confirmLogout, setConfirmLogout] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
+  const [open, setOpen] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  
   // Close drawer on route change
   useEffect(() => {
     setOpen(false);
@@ -27,6 +30,7 @@ export default function AppLayout() {
   const handleLogout = () => {
   setConfirmLogout(false);
   setOpen(false);
+  logout();
   toast.success("Logged out safely.");
   navigate("/login");
 };

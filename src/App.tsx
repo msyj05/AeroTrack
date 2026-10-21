@@ -12,6 +12,7 @@ import Settings from './pages/Settings'
 import EditFlightLog from "./pages/EditFlightLog";
 import DroneDetails from "./pages/DroneDetails";
 import BatteryDetails from './pages/BatteryDetails'
+import ProtectedRoute from './components/layout/ProtectedRoute'
 
 export default function App() {
   return (
@@ -19,17 +20,19 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
 
-      <Route element={<AppLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/flight-logs" element={<FlightLogs />} />
-        <Route path="/flight-logs/new" element={<AddFlightLog />} />
-        <Route path="/flight-logs/:id/edit" element={<EditFlightLog />} />
-        <Route path="/flight-logs/:id" element={<FlightDetails />} />
-        <Route path="/drones" element={<Drones />} />
-        <Route path="/drones/:id" element={<DroneDetails />} />
-        <Route path="/batteries" element={<Batteries />} />
-        <Route path="/batteries/:serial" element={<BatteryDetails />} />
-        <Route path="/settings" element={<Settings />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/flight-logs" element={<FlightLogs />} />
+          <Route path="/flight-logs/new" element={<AddFlightLog />} />
+          <Route path="/flight-logs/:id/edit" element={<EditFlightLog />} />
+          <Route path="/flight-logs/:id" element={<FlightDetails />} />
+          <Route path="/drones" element={<Drones />} />
+          <Route path="/drones/:id" element={<DroneDetails />} />
+          <Route path="/batteries" element={<Batteries />} />
+          <Route path="/batteries/:serial" element={<BatteryDetails />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
