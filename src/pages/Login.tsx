@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Eye, EyeOff, KeyRound, Mail } from 'lucide-react'
 import AuthShell from '../components/auth/AuthShell'
+import { toast } from "sonner";
 
 export default function Login() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export default function Login() {
   // Mock only: real authentication comes with the backend
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
+    toast.success("Login successful");
     navigate('/dashboard')
   }
 

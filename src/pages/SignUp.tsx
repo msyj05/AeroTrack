@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail } from 'lucide-react'
 import AuthShell from '../components/auth/AuthShell'
+import { toast } from "sonner";
 
 export default function SignUp() {
   const navigate = useNavigate()
@@ -16,8 +17,10 @@ export default function SignUp() {
     e.preventDefault()
     if (form.password.length < 10) return setError('Password must be at least 10 characters.')
     if (form.password !== form.confirm) return setError('Passwords do not match.')
+    
     setError('')
-    navigate('/dashboard') // Mock only
+    toast.success("Account created successfully.");
+    navigate('/login') // Mock only
   }
 
   const Eyeball = (

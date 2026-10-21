@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import { SidebarContext } from "./SidebarContext";
+import { toast } from "sonner";
 
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
@@ -24,10 +25,11 @@ export default function AppLayout() {
   }, [open, confirmLogout]);
 
   const handleLogout = () => {
-    setConfirmLogout(false);
-    setOpen(false);
-    navigate("/login");
-  };
+  setConfirmLogout(false);
+  setOpen(false);
+  toast.success("Logged out safely.");
+  navigate("/login");
+};
 
   return (
     <SidebarContext.Provider
