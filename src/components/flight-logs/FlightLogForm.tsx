@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, CheckCircle2, Timer } from "lucide-react";
-import { currentUser } from "../../data/mock";
 import { useData } from "../../data/DataContext";
 import type { FlightFormState, FlightLog } from "../../types";
 import type { FlightFormChange } from "./FormParts";
@@ -58,7 +57,7 @@ interface Props {
 
 export default function FlightLogForm({ initialLog }: Props) {
   const navigate = useNavigate();
-  const { drones, batteries, flightLogs, addFlightLog, updateFlightLog } =
+  const { drones, batteries, flightLogs, addFlightLog, updateFlightLog, user } =
     useData();
   const isEdit = !!initialLog;
 
@@ -74,7 +73,7 @@ export default function FlightLogForm({ initialLog }: Props) {
           end: "",
           purpose: "",
           drone: drones[0]?.name ?? "",
-          pilot: currentUser.name,
+          pilot: user.name,
           type: "",
           batterySerial: batteries[0]?.serial ?? "",
           cycles: "",

@@ -5,12 +5,15 @@ import {
   type FormEvent,
   type ChangeEvent,
 } from "react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../data/AuthContext";
 import Topbar from "../components/layout/Topbar";
 import { useData } from "../data/DataContext";
 import { toast } from "sonner";
 
 export default function Settings() {
   const { user, updateUser } = useData();
+  const { user: authUser } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState({
@@ -49,14 +52,35 @@ export default function Settings() {
     toast.success("Password updated.");
   };
 
-  const handlePhoto = (e: ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      updateUser({ photo: reader.result as string });
-    };
-    reader.readAsDataURL(file);
+    if (!file || !authUser) return;
+
+    // Guard: reject anything over 2 MB before it hits the network
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2 MB.");
+      return;
+    }
+
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${authUser.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (uploadError) {
+      toast.error(uploadError.message);
+      return;
+    }
+
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+
+    // Cache-bust so the <img> refreshes even if the path is the same
+    const url = `${data.publicUrl}?v=${Date.now()}`;
+
+    await updateUser({ photo: url });
+    toast.success("Photo updated.");
   };
 
   const avatar = user.photo ? (
