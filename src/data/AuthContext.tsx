@@ -40,8 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener("storage", onStorage);
 
     // Re-sync profile data when the user comes back to this tab
+    let lastSync = 0;
     const syncUser = async () => {
       if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastSync < 30_000) return;  
+      lastSync = Date.now();                      
       const { data } = await supabase.auth.getUser();
       const fresh = data.user;
       if (!fresh) return;

@@ -21,6 +21,7 @@ export default function Settings() {
     phone: user.phone,
   });
   const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+  const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => {
     setProfile({ name: user.name, phone: user.phone });
@@ -42,12 +43,44 @@ export default function Settings() {
     }
   };
 
-  const savePassword = (e: FormEvent) => {
+  const savePassword = async (e: FormEvent) => {
     e.preventDefault();
+
     if (!pw.current) return toast.error("Enter your current password.");
     if (!meetsPolicy)
       return toast.error("Password must be at least 10 characters.");
     if (mismatch) return toast.error("Passwords do not match.");
+
+    setPwLoading(true);
+
+    // 1. Verify the current password by re-authenticating.
+    const email = authUser?.email;
+    if (!email) {
+      setPwLoading(false);
+      return toast.error("Could not read your account email.");
+    }
+
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password: pw.current,
+    });
+
+    if (authError) {
+      setPwLoading(false);
+      // Do NOT clear the fields — let the user retype the current password.
+      return toast.error("Current password is incorrect.");
+    }
+
+    // 2. Update to the new password.
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: pw.next,
+    });
+
+    setPwLoading(false);
+
+    if (updateError) return toast.error(updateError.message);
+
+    // Clear only on success
     setPw({ current: "", next: "", confirm: "" });
     toast.success("Password updated.");
   };
@@ -56,7 +89,6 @@ export default function Settings() {
     const file = e.target.files?.[0];
     if (!file || !authUser) return;
 
-    // Guard: reject anything over 2 MB before it hits the network
     if (file.size > 2 * 1024 * 1024) {
       toast.error("Image must be under 2 MB.");
       return;
@@ -75,8 +107,6 @@ export default function Settings() {
     }
 
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-
-    // Cache-bust so the <img> refreshes even if the path is the same
     const url = `${data.publicUrl}?v=${Date.now()}`;
 
     await updateUser({ photo: url });
@@ -99,7 +129,6 @@ export default function Settings() {
     <>
       <Topbar title="Profile / Settings" />
       <div className="max-w-3xl space-y-6 p-4 sm:p-8">
-        
         <form onSubmit={saveProfile} className="card p-6">
           <h2 className="font-display text-lg font-semibold">
             Profile information
@@ -197,7 +226,6 @@ export default function Settings() {
             ))}
           </div>
 
-          {/* Validation hints */}
           {missingCurrent && (
             <p className="mt-3 text-sm text-amber-600">
               Please enter your current password.
@@ -215,10 +243,10 @@ export default function Settings() {
           <div className="mt-5 flex justify-end">
             <button
               type="submit"
-              disabled={!meetsPolicy || mismatch || missingCurrent}
+              disabled={!meetsPolicy || mismatch || missingCurrent || pwLoading}
               className="btn-primary w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Update password
+              {pwLoading ? "Updating..." : "Update password"}
             </button>
           </div>
         </form>
@@ -226,5 +254,3 @@ export default function Settings() {
     </>
   );
 }
-
-
