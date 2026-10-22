@@ -16,7 +16,6 @@ import FlightLogMetric from "../components/flight-logs/FlightLogMetric";
 import FlightLogPanel, {
   FlightLogRow as Row,
 } from "../components/flight-logs/FlightLogPanel";
-import { toast } from "sonner";
 import { useData } from "../data/DataContext";
 
 const dash = (v?: string | number) =>
@@ -47,7 +46,6 @@ export default function FlightDetails() {
   const handleDelete = () => {
     deleteFlightLog(log.id);
     setConfirmDelete(false);
-    toast.success("Flight log deleted.");
     navigate("/flight-logs");
   };
 

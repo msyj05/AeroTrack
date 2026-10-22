@@ -28,7 +28,7 @@ export default function App() {
           <Route path="/flight-logs/:id/edit" element={<EditFlightLog />} />
           <Route path="/flight-logs/:id" element={<FlightDetails />} />
           <Route path="/drones" element={<Drones />} />
-          <Route path="/drones/:id" element={<DroneDetails />} />
+          <Route path="/drones/:serial" element={<DroneDetails />} />
           <Route path="/batteries" element={<Batteries />} />
           <Route path="/batteries/:serial" element={<BatteryDetails />} />
           <Route path="/settings" element={<Settings />} />

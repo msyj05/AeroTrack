@@ -68,8 +68,8 @@ export default function Drones() {
         <div className="grid gap-5 lg:grid-cols-2">
           {list.map((d) => (
             <Link
-              key={d.id}
-              to={`/drones/${d.id}`}
+              key={d.serial}
+              to={`/drones/${encodeURIComponent(d.serial)}`}
               className="card block p-4 transition hover:border-brand/40 hover:shadow-md sm:p-6"
             >
               <div className="flex items-start gap-4">

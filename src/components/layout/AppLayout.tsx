@@ -4,13 +4,16 @@ import Sidebar from "./Sidebar";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import { SidebarContext } from "./SidebarContext";
 import { useAuth } from "../../data/AuthContext";
+import { useData } from "../../data/DataContext";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
-
+  const { loading } = useData();
+  
   const [open, setOpen] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   
@@ -26,6 +29,15 @@ export default function AppLayout() {
       document.body.style.overflow = "";
     };
   }, [open, confirmLogout]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
+      </div>
+    );
+  }
+
 
   const handleLogout = () => {
   setConfirmLogout(false);
@@ -66,5 +78,6 @@ export default function AppLayout() {
         onCancel={() => setConfirmLogout(false)}
       />
     </SidebarContext.Provider>
+    
   );
 }

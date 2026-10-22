@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import { useData } from "../../data/DataContext";
-import { toast } from "sonner";
 import type { Battery, BatteryCondition } from "../../types";
 import Modal from "../ui/Modal";
 
@@ -125,10 +124,8 @@ export default function AddBatteryDialog({
 
     if (isEdit && initialBattery) {
       updateBattery(initialBattery.serial, payload);
-      toast.success("Battery updated.");
     } else {
       addBattery(payload as Battery);
-      toast.success("Battery added.");
     }
 
     close();

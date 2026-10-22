@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type FormEvent,
@@ -18,15 +19,25 @@ export default function Settings() {
   });
   const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
 
+  useEffect(() => {
+    setProfile({ name: user.name, phone: user.phone });
+  }, [user.name, user.phone]);
+
   const meetsPolicy = pw.next.length >= 10;
   const mismatch = pw.confirm !== "" && pw.next !== pw.confirm;
   const missingCurrent = pw.current === "" && pw.next !== "";
 
-  const saveProfile = (e: FormEvent) => {
-  e.preventDefault();
-  updateUser({ name: profile.name, phone: profile.phone });
-  toast.success("Profile saved.");
-};
+  const saveProfile = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateUser({ name: profile.name, phone: profile.phone });
+      toast.success("Profile saved.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not save profile.",
+      );
+    }
+  };
 
   const savePassword = (e: FormEvent) => {
     e.preventDefault();
@@ -191,3 +202,5 @@ export default function Settings() {
     </>
   );
 }
+
+

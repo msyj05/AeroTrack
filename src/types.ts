@@ -4,6 +4,7 @@ export type BatteryCondition = 'Excellent' | 'Good' | 'Monitor' | 'Degraded'
 
 export interface FlightLog {
   id: string;
+  dbId?: string;
   date: string;
   pilot: string;
   drone: string;

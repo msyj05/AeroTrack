@@ -1,37 +1,103 @@
+import { supabase } from "../lib/supabase";
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Eye, EyeOff, Mail } from 'lucide-react'
 import AuthShell from '../components/auth/AuthShell'
-import { useAuth } from "../data/AuthContext";
 import { toast } from "sonner";
 
 export default function SignUp() {
-  const navigate = useNavigate()
-  const { login } = useAuth();
-
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
-  const [show, setShow] = useState(false)
-  const [error, setError] = useState('')
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirm: "",
+  });
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [key]: e.target.value })
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    if (form.password.length < 10) return setError('Password must be at least 10 characters.')
-    if (form.password !== form.confirm) return setError('Passwords do not match.')
-    
-    setError('')
-    login();
-    toast.success("Account created successfully.");
-    navigate('/login')
-  }
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (form.password.length < 10)
+      return setError("Password must be at least 10 characters.");
+    if (form.password !== form.confirm)
+      return setError("Passwords do not match.");
+
+    setError("");
+    setLoading(true);
+
+    const { error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: {
+        data: { full_name: form.name },
+        emailRedirectTo: `${window.location.origin}/login`, // where the email link lands
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    setPendingEmail(form.email);
+  };
 
   const Eyeball = (
     <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" aria-label="Toggle password visibility">
       {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
     </button>
   )
+
+  if (pendingEmail) {
+    return (
+      <AuthShell>
+        <div className="text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+            <Mail className="h-7 w-7 text-emerald-600" />
+          </div>
+          <h1 className="mt-6 font-display text-3xl font-semibold">
+            Check your email
+          </h1>
+          <p className="mt-3 text-slate-600">
+            We sent a verification link to{" "}
+            <span className="font-medium text-ink">{pendingEmail}</span>. Click
+            it to activate your AeroTrack account.
+          </p>
+          <p className="mt-2 text-sm text-slate-500">
+            Didn't get it? Check spam, or{" "}
+            <button
+              onClick={async () => {
+                const { error } = await supabase.auth.resend({
+                  type: "signup",
+                  email: pendingEmail,
+                  options: {
+                    emailRedirectTo: `${window.location.origin}/login`,
+                  },
+                });
+                if (error) toast.error(error.message);
+                else toast.success("Verification email resent.");
+              }}
+              className="text-brand hover:underline"
+            >
+              resend the email
+            </button>
+            .
+          </p>
+          <Link to="/login" className="btn-primary mt-8 w-full py-3">
+            Back to log in
+          </Link>
+        </div>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell>
@@ -66,7 +132,9 @@ export default function SignUp() {
 
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-        <button type="submit" className="btn-primary mt-6 w-full py-3">Create account</button>
+        <button type="submit" disabled={loading} className="btn-primary mt-6 w-full py-3 disabled:opacity-30">
+          {loading ? "Creating account..." : "Create account"}
+        </button>
 
         <p className="mt-5 text-sm text-slate-600">
           By signing up you agree to the Terms &amp; Aviation Data Policy.{' '}
