@@ -299,16 +299,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // --- USER ---
-  const updateUser = useCallback(async (patch: Partial<User>) => {
-    const metadata: Record<string, unknown> = {};
-    if (patch.name !== undefined) metadata.full_name = patch.name;
-    if (patch.phone !== undefined) metadata.phone = patch.phone;
-    if (patch.photo !== undefined) metadata.photo = patch.photo;
+  
+const updateUser = useCallback(async (patch: Partial<User>) => {
+  const metadata: Record<string, unknown> = {};
 
-    const { error } = await supabase.auth.updateUser({ data: metadata });
-    if (error) toast.error(error.message);
-    // No success toast here — Settings.tsx already shows one. Avoid doubles.
-  }, []);
+  if (patch.name !== undefined) metadata.full_name = patch.name;
+  if (patch.phone !== undefined) metadata.phone = patch.phone;
+  if (patch.photo !== undefined) metadata.photo = patch.photo;
+
+  const { error } = await supabase.auth.updateUser({
+    data: metadata,
+  });
+
+  if (error) {
+    throw error;
+  }
+}, []);
+
 
   const reset = useCallback(() => {
     fetchData();

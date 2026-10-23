@@ -12,7 +12,7 @@ export default function Dashboard() {
  const [metric, setMetric] = useState<"flights" | "hours">("flights");
  const { flightLogs, drones, batteries } = useData();
  const activityByDay = computeActivityByDay(flightLogs);
- 
+ const hasActivity = activityByDay.some((d) => d.flights > 0);
 
  const values = activityByDay.map((d) => d[metric]);
  // Guard: Math.max of all zeros returns 0, which breaks division. Fall back to 1.
@@ -78,37 +78,68 @@ export default function Dashboard() {
                   days
                 </p>
               </div>
-              <div className="flex gap-2">
-                {(["flights", "hours"] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setMetric(m)}
-                    className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${
-                      metric === m
-                        ? "border-blue-100 bg-blue-50 text-brand"
-                        : "border-slate-200 text-slate-600"
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
+              {hasActivity && (
+                <div className="flex gap-2">
+                  {(["flights", "hours"] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setMetric(m)}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${
+                        metric === m
+                          ? "border-blue-100 bg-blue-50 text-brand"
+                          : "border-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="mt-6 flex h-52 items-end gap-3">
-              {activityByDay.map((d, i) => (
-                <div
-                  key={d.label}
-                  title={`${d.label}: ${values[i]}`}
-                  className={`flex-1 rounded-t-lg ${values[i] === max ? "bg-brand" : "bg-blue-100"}`}
-                  style={{ height: `${(values[i] / max) * 100}%` }}
-                />
-              ))}
-            </div>
-            <div className="mt-2 flex justify-between text-xs text-slate-500">
-              <span>{activityByDay[0].label}</span>
-              <span>{activityByDay[activityByDay.length - 1].label}</span>
-            </div>
+            {hasActivity ? (
+              <>
+                <div className="mt-6 flex h-52 items-end gap-3">
+                  {activityByDay.map((d, i) => (
+                    <div
+                      key={d.label}
+                      title={`${d.label}: ${values[i]}`}
+                      className={`flex-1 rounded-t-lg ${
+                        values[i] === max ? "bg-brand" : "bg-blue-100"
+                      }`}
+                      style={{ height: `${(values[i] / max) * 100}%` }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-2 flex justify-between text-xs text-slate-500">
+                  <span>{activityByDay[0].label}</span>
+                  <span>{activityByDay[activityByDay.length - 1].label}</span>
+                </div>
+              </>
+            ) : (
+              <EmptyState
+                icon={Plane}
+                title="No flight activity yet"
+                description={
+                  flightLogs.length === 0
+                    ? "Add your first flight log to start seeing activity here."
+                    : "No flights recorded in the last 12 days. Older logs are still in your logbook."
+                }
+                compact
+                action={
+                  flightLogs.length === 0 ? (
+                    <Link to="/flight-logs/new" className="btn-primary">
+                      <Plus className="h-4 w-4" />
+                      Add Flight Log
+                    </Link>
+                  ) : (
+                    <Link to="/flight-logs" className="btn-outline">
+                      View all logs
+                    </Link>
+                  )
+                }
+              />
+            )}
           </div>
 
           <div className="card flex flex-col p-6">

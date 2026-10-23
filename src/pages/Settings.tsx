@@ -85,33 +85,61 @@ export default function Settings() {
     toast.success("Password updated.");
   };
 
-  const handlePhoto = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !authUser) return;
+ 
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be under 2 MB.");
-      return;
-    }
+const handlePhoto = async (e: ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
 
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `${authUser.id}/avatar.${ext}`;
+  if (!file || !authUser) return;
 
+  // Allow selecting the same file again later.
+  e.target.value = "";
+
+  if (!file.type.startsWith("image/")) {
+    toast.error("Please select a valid image.");
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error("Image must be under 2 MB.");
+    return;
+  }
+
+  const path = `${authUser.id}/avatar`;
+
+  try {
+    // Replace the existing image at the same path.
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, file, {
+        upsert: true,
+        contentType: file.type,
+        cacheControl: "0",
+      });
 
     if (uploadError) {
-      toast.error(uploadError.message);
-      return;
+      console.error("Avatar upload failed:", uploadError);
+      throw uploadError;
     }
 
+    // Generate a fresh URL to avoid displaying a cached image.
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+
     const url = `${data.publicUrl}?v=${Date.now()}`;
 
     await updateUser({ photo: url });
+
     toast.success("Photo updated.");
-  };
+  } catch (err) {
+    console.error("Photo update failed:", err);
+
+    toast.error(
+      err instanceof Error ? err.message : "Could not update profile photo.",
+    );
+  }
+};
+
+
 
   const avatar = user.photo ? (
     <img
