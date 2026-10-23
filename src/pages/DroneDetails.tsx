@@ -12,7 +12,7 @@ import {
 import StatusBadge from "../components/ui/StatusBadge";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import DroneDialog from "../components/drones/DroneDialog";
-import { useData } from "../data/DataContext";
+import { useData } from "../contexts/DataContext";
 import type { DroneStatus } from "../types";
 
 export default function DroneDetails() {

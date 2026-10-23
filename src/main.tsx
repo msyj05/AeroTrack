@@ -3,8 +3,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import ScrollToTop from "./components/ui/ScrollToTop";
-import { DataProvider } from "./data/DataContext";
-import { AuthProvider } from "./data/AuthContext";
+import { DataProvider } from "./contexts/DataContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "sonner";
 import "./index.css";
 

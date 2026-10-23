@@ -1,7 +1,7 @@
 import { BatteryCharging, ChevronDown, Thermometer } from "lucide-react";
-import { useData } from "../../data/DataContext";
+import { useData } from "../../contexts/DataContext";
 import type { FlightFormState } from "../../types";
-import { Field, Section, type FlightFormChange } from "./FormParts";
+import { Field, Section, type FlightFormChange } from "../ui/FormParts";
 
 interface Props {
   f: FlightFormState;

@@ -16,7 +16,7 @@ import FlightLogMetric from "../components/flight-logs/FlightLogMetric";
 import FlightLogPanel, {
   FlightLogRow as Row,
 } from "../components/flight-logs/FlightLogPanel";
-import { useData } from "../data/DataContext";
+import { useData } from "../contexts/DataContext";
 
 const dash = (v?: string | number) =>
   v === undefined || v === "" ? "—" : String(v);

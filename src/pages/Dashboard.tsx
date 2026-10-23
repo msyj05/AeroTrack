@@ -4,7 +4,7 @@ import { ArrowRight, BatteryCharging, Clock, Command, Plane, Plus } from 'lucide
 import Topbar from '../components/layout/Topbar'
 import StatCard from '../components/ui/StatCard'
 import StatusBadge from '../components/ui/StatusBadge'
-import { useData } from '../data/DataContext'
+import { useData } from '../contexts/DataContext'
 import EmptyState from "../components/ui/EmptyState";
 import { computeActivityByDay } from "../utils/activity";
 

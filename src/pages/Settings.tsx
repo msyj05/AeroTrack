@@ -6,9 +6,9 @@ import {
   type ChangeEvent,
 } from "react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../data/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 import Topbar from "../components/layout/Topbar";
-import { useData } from "../data/DataContext";
+import { useData } from "../contexts/DataContext";
 import { toast } from "sonner";
 
 export default function Settings() {

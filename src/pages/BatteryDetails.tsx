@@ -12,7 +12,7 @@ import {
 import StatusBadge from "../components/ui/StatusBadge";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import AddBatteryDialog from "../components/batteries/AddBatteryDialog";
-import { useData } from "../data/DataContext";
+import { useData } from "../contexts/DataContext";
 import { toast } from "sonner";
 
 const barColor = (health: number) =>

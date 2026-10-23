@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import ConfirmDialog from "../ui/ConfirmDialog";
-import { SidebarContext } from "./SidebarContext";
-import { useAuth } from "../../data/AuthContext";
-import { useData } from "../../data/DataContext";
+import { SidebarContext } from "../../contexts/SidebarContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { useData } from "../../contexts/DataContext";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 

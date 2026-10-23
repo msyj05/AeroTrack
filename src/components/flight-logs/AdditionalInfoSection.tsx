@@ -1,6 +1,6 @@
 import { FileText } from "lucide-react";
 import type { FlightFormState } from "../../types";
-import { Field, Section, type FlightFormChange } from "./FormParts";
+import { Field, Section, type FlightFormChange } from "../ui/FormParts";
 
 interface Props {
   f: FlightFormState;

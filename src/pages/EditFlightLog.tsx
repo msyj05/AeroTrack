@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { useData } from "../data/DataContext";
+import { useData } from "../contexts/DataContext";
 import FlightLogForm from "../components/flight-logs/FlightLogForm";
 
 export default function EditFlightLog() {

@@ -1,5 +1,5 @@
 import { Bell, Menu, Search } from 'lucide-react'
-import { useSidebar } from './SidebarContext'
+import { useSidebar } from '../../contexts/SidebarContext'
 
 interface Props {
   title: string

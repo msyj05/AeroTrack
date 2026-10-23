@@ -9,8 +9,8 @@ import {
   X,
 } from "lucide-react";
 import Logo from "../ui/Logo";
-import { useData } from "../../data/DataContext";
-import { useSidebar } from "./SidebarContext";
+import { useData } from "../../contexts/DataContext";
+import { useSidebar } from "../../contexts/SidebarContext";
 
 export default function Sidebar() {
   const { open, setOpen, setConfirmLogout } = useSidebar();

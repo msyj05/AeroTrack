@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, CheckCircle2, Timer } from "lucide-react";
-import { useData } from "../../data/DataContext";
+import { useData } from "../../contexts/DataContext";
 import type { FlightFormState, FlightLog } from "../../types";
-import type { FlightFormChange } from "./FormParts";
+import type { FlightFormChange } from "../ui/FormParts";
 import FlightInfoSection from "./FlightInfoSection";
 import DroneInfoSection from "./DroneInfoSection";
 import BatteryInfoSection from "./BatteryInfoSection";
