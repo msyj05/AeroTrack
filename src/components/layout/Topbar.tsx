@@ -1,4 +1,4 @@
-import { Bell, Menu, Search } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { useSidebar } from '../../contexts/SidebarContext'
 
 interface Props {
@@ -23,25 +23,6 @@ export default function Topbar({ title }: Props) {
             {title}
           </h1>
         </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <label className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 lg:flex">
-          <Search className="h-4 w-4 text-slate-400" />
-          <input
-            className="w-56 bg-transparent text-sm outline-none placeholder:text-slate-400"
-            placeholder="Search logs, drones, pilots..."
-          />
-          <kbd className="rounded border border-slate-200 bg-white px-1.5 text-xs text-slate-500">
-            K
-          </kbd>
-        </label>
-
-        <button className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50">
-          <Bell className="h-4 w-4 text-ink" />
-          <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand" />
-        </button>
-
       </div>
     </header>
   );

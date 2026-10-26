@@ -207,7 +207,7 @@ export default function FlightLogs() {
 
                       <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                         <Meta k="Date" v={f.date} />
-                        <Meta k="Duration" v={`${f.durationMin}m`} />
+                        <Meta k="Duration" v={`${f.durationMin} min`} />
                         <Meta k="Pilot" v={f.pilot} />
                         <Meta k="Battery" v={f.battery} />
                         <div className="col-span-2">
@@ -277,7 +277,7 @@ export default function FlightLogs() {
                           {f.end}
                         </td>
                         <td className="px-5 py-3.5 font-medium">
-                          {f.durationMin}m
+                          {f.durationMin} min
                         </td>
                         <td className="px-5 py-3.5 text-slate-500">
                           {f.battery}

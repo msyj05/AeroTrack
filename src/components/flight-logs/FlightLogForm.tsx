@@ -57,7 +57,7 @@ interface Props {
 
 export default function FlightLogForm({ initialLog }: Props) {
   const navigate = useNavigate();
-  const { drones, batteries, flightLogs, addFlightLog, updateFlightLog, user } =
+  const { drones, batteries, addFlightLog, updateFlightLog, user } =
     useData();
   const isEdit = !!initialLog;
 
@@ -120,7 +120,7 @@ export default function FlightLogForm({ initialLog }: Props) {
   const canSave =
     !!f.date && !!f.location && !!f.start && !!f.end && !endInvalid;
 
-  const save = () => {
+  const save = async () => {
     if (!canSave) return;
 
     // Parse yyyy-mm-dd as local time, then format like the rest of the app
@@ -161,14 +161,9 @@ export default function FlightLogForm({ initialLog }: Props) {
       });
       navigate(`/flight-logs/${initialLog.id}`);
     } else {
-      // Next FL-XXXX from existing logs
-      const highest = flightLogs.reduce((max, l) => {
-        const n = Number(l.id.replace("FL-", ""));
-        return Number.isFinite(n) && n > max ? n : max;
-      }, 2474);
 
       const newLog: FlightLog = {
-        id: `FL-${highest + 1}`,
+        id: "",
         date: formatted,
         pilot: f.pilot,
         drone: f.drone,
@@ -190,8 +185,8 @@ export default function FlightLogForm({ initialLog }: Props) {
         incident: f.incident || undefined,
       };
 
-      addFlightLog(newLog);
-      navigate("/flight-logs");
+      const ok = await addFlightLog(newLog);
+      if (ok) navigate("/flight-logs");
     }
   };
 

@@ -223,7 +223,7 @@ export default function Dashboard() {
                       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
                         <span className="font-medium text-ink">{f.pilot}</span>
                         <span className="truncate">{f.drone}</span>
-                        <span className="font-mono">{f.durationMin}m</span>
+                        <span className="font-mono">{f.durationMin} min</span>
                         <span className="font-mono">{f.battery}</span>
                       </div>
                     </Link>
@@ -267,7 +267,7 @@ export default function Dashboard() {
                         <td className="px-6 py-3.5 text-slate-500">
                           {f.location}
                         </td>
-                        <td className="px-6 py-3.5">{f.durationMin}m</td>
+                        <td className="px-6 py-3.5">{f.durationMin} min</td>
                         <td className="px-6 py-3.5 text-slate-500">
                           {f.battery}
                         </td>

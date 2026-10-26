@@ -169,7 +169,7 @@ export default function DroneDetails() {
                       </p>
                     </div>
                     <div className="shrink-0 text-right text-xs text-slate-500">
-                      <p className="font-mono">{f.durationMin}m</p>
+                      <p className="font-mono">{f.durationMin} min</p>
                       <p className="font-mono">{f.pilot.split(" ")[0]}</p>
                     </div>
                   </Link>

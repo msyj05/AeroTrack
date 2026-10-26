@@ -8,7 +8,6 @@ const styles: Record<Label, string> = {
   Good: 'bg-emerald-50 text-emerald-700',
   Excellent: 'bg-emerald-50 text-emerald-700',
   Incident: 'bg-red-50 text-red-700',
-  Grounded: 'bg-red-50 text-red-700',
   Degraded: 'bg-red-50 text-red-700',
   Review: 'bg-amber-50 text-amber-700',
   Monitor: 'bg-amber-50 text-amber-700',

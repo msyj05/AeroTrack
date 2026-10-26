@@ -44,7 +44,7 @@ export default function Drones() {
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full appearance-none bg-transparent pr-6 outline-none"
               >
-                {["All statuses", "Ready", "In Maintenance", "Grounded"].map(
+                {["All statuses", "Ready", "In Maintenance"].map(
                   (s) => (
                     <option key={s}>{s}</option>
                   ),

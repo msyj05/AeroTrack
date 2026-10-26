@@ -20,7 +20,7 @@ interface Store {
 
 interface DataCtx extends Store {
   user: User;
-  addFlightLog: (log: FlightLog) => Promise<void>;
+  addFlightLog: (log: FlightLog) => Promise<boolean>;
   updateFlightLog: (id: string, patch: Partial<FlightLog>) => Promise<void>;
   deleteFlightLog: (id: string) => Promise<void>;
   addDrone: (drone: Drone) => Promise<void>;
@@ -117,7 +117,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .from("flight_logs")
       .insert([
         {
-          flightId: log.id,
           user_id: userId,
           date: log.date,
           pilot: log.pilot,
@@ -145,14 +144,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       toast.error(error.message);
-      return;
+      return false;
     }
 
     if (data) {
-      const newLog: FlightLog = { ...log, dbId: data.id };
+      const newLog: FlightLog = { ...log, id: data.flightId, dbId: data.id };
       setStore((s) => ({ ...s, flightLogs: [newLog, ...s.flightLogs] }));
       toast.success("Flight log saved.");
+      return true;
     }
+    return false;
   };
 
   const deleteFlightLog = async (id: string) => {

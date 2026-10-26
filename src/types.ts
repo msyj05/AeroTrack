@@ -1,5 +1,5 @@
 export type FlightStatus = 'Completed' | 'Incident' | 'Review'
-export type DroneStatus = 'Ready' | 'In Maintenance' | 'Grounded'
+export type DroneStatus = 'Ready' | 'In Maintenance'
 export type BatteryCondition = 'Excellent' | 'Good' | 'Monitor' | 'Degraded'
 
 export interface FlightLog {
@@ -47,11 +47,11 @@ export interface Battery {
 }
 
 export interface User {
-  name: string
-  initials: string
-  email: string
-  phone: string
-  photo?: string //base64 data URL
+  name: string;
+  initials: string;
+  email: string;
+  phone: string;
+  photo?: string; // Public URL of the avatar in Supabase Storage
 }
 
 /** Raw string values held by the add flight log form */
